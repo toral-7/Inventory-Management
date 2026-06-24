@@ -480,7 +480,7 @@ npm run dev
 
 ## 👨‍💻 Author
 
-**Maze** - B.Tech Semester 2, NMIMS
+**Toral** - B.Tech Semester 3, NMIMS
 - Co-Secretary, Technical Affairs (Junior Council)
 - Project: Capstone - Inventory & Billing Management System
 
@@ -489,8 +489,8 @@ npm run dev
 ## 📞 Support
 
 For issues or questions:
-1. Check the API_DOCS.md for endpoint details
-2. Check SETUP.md for installation help
+1. Check the [API_DOCS.md](./API_DOCS.md) for endpoint details
+2. Check [SETUP.md](./SETUP.md) for installation help
 3. Review code comments in backend routes
 4. Check browser console for errors
 
