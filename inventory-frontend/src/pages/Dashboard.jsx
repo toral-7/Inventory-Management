@@ -1,176 +1,252 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { AlertCircle, TrendingUp, Package, Receipt } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Sidebar from '../components/Sidebar'
+import StyledCard from '../components/styled/StyledCard'
 import client from '../api/client'
-import {
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from 'recharts'
-
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
 
 export default function Dashboard() {
   const { user } = useAuth()
-  const [analytics, setAnalytics] = useState(null)
+  const [dashboard, setDashboard] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        setLoading(true)
-        const response = await client.get('/analytics/dashboard')
-        if (response.data.success) {
-          setAnalytics(response.data.dashboard)
-        }
-      } catch (err) {
-        setError(err.message)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchAnalytics()
+    fetchDashboard()
   }, [])
+
+  const fetchDashboard = async () => {
+    try {
+      setLoading(true)
+      const response = await client.get('/analytics/dashboard')
+      if (response.data.success) {
+        setDashboard(response.data.dashboard)
+      }
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-gray-100">
+      <div className="flex h-screen bg-clickhouse-canvas">
         <Sidebar />
         <div className="flex-1 flex flex-col">
           <Navbar />
           <main className="flex-1 flex items-center justify-center">
-            <div className="text-xl text-gray-600">Loading analytics...</div>
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-full border-4 border-clickhouse-hairline border-t-clickhouse-yellow animate-spin mx-auto mb-lg"></div>
+              <p className="text-clickhouse-body font-medium">Loading dashboard...</p>
+            </div>
           </main>
         </div>
       </div>
     )
   }
 
+  if (error) {
+    return (
+      <div className="flex h-screen bg-clickhouse-canvas">
+        <Sidebar />
+        <div className="flex-1 flex flex-col">
+          <Navbar />
+          <main className="flex-1 flex items-center justify-center p-lg">
+            <StyledCard className="max-w-md">
+              <div className="text-center">
+                <AlertCircle className="w-12 h-12 text-clickhouse-rose mx-auto mb-lg" />
+                <p className="text-clickhouse-body mb-lg">{error}</p>
+                <button
+                  onClick={fetchDashboard}
+                  className="btn btn-primary"
+                >
+                  Try Again
+                </button>
+              </div>
+            </StyledCard>
+          </main>
+        </div>
+      </div>
+    )
+  }
+
+  const summaryCards = [
+    {
+      title: 'Total Revenue',
+      value: `₹${dashboard?.summary?.total_revenue || 0}`,
+      subtext: 'Last 30 days',
+      icon: TrendingUp,
+    },
+    {
+      title: 'Total Bills',
+      value: dashboard?.summary?.total_bills || 0,
+      subtext: 'Last 30 days',
+      icon: Receipt,
+    },
+    {
+      title: 'Low Stock Items',
+      value: dashboard?.summary?.low_stock_items || 0,
+      subtext: 'Requires attention',
+      icon: AlertCircle,
+    },
+    {
+      title: 'Total Products',
+      value: dashboard?.summary?.total_products || 0,
+      subtext: 'In catalog',
+      icon: Package,
+    }
+  ]
+
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-clickhouse-canvas">
       <Sidebar />
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col overflow-hidden">
         <Navbar />
-        <main className="flex-1 overflow-auto p-8">
-          <div className="max-w-7xl">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">
-              Welcome, {user?.name}!
-            </h1>
-            <p className="text-gray-600 mb-8">
-              Inventory & Billing Management System
-            </p>
+        <main className="flex-1 overflow-auto">
+          <div className="p-xl">
+            <div className="max-w-7xl">
+              {/* Header */}
+              <div className="mb-xxl">
+                <h1 className="text-display-sm text-clickhouse-ink mb-md">Welcome back, {user?.name}!</h1>
+                <p className="text-body-md text-clickhouse-body">Here's what's happening in your inventory today.</p>
+              </div>
 
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                {error}
+              {/* Summary Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-lg mb-xxl">
+                {summaryCards.map((card, index) => {
+                  const Icon = card.icon
+                  return (
+                    <StyledCard
+                      key={index}
+                      className="animate-slide-up"
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                      <div className="flex items-start justify-between mb-lg">
+                        <Icon size={24} className="text-clickhouse-body" />
+                        <span className="text-xs text-clickhouse-muted">{card.subtext}</span>
+                      </div>
+                      <p className="text-sm text-clickhouse-body mb-xs">{card.title}</p>
+                      <p className="text-stat-display text-clickhouse-yellow">
+                        {typeof card.value === 'number' ? card.value : card.value.replace('₹', '')}
+                      </p>
+                    </StyledCard>
+                  )
+                })}
               </div>
-            )}
 
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="text-gray-600 text-sm font-medium">Total Revenue</div>
-                <div className="text-3xl font-bold text-gray-800 mt-2">
-                  ₹{analytics?.summary.total_revenue}
-                </div>
-                <p className="text-xs text-gray-500 mt-2">Last 30 days</p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="text-gray-600 text-sm font-medium">Total Bills</div>
-                <div className="text-3xl font-bold text-gray-800 mt-2">
-                  {analytics?.summary.total_bills}
-                </div>
-                <p className="text-xs text-gray-500 mt-2">Last 30 days</p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="text-gray-600 text-sm font-medium">Low Stock Items</div>
-                <div className="text-3xl font-bold text-red-600 mt-2">
-                  {analytics.inventory.health.low_stock}
-                </div>
-                <p className="text-xs text-gray-500 mt-2">Need attention</p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="text-gray-600 text-sm font-medium">Total Products</div>
-                <div className="text-3xl font-bold text-gray-800 mt-2">
-                  {analytics?.summary.total_products}
-                </div>
-                <p className="text-xs text-gray-500 mt-2">In catalog</p>
-              </div>
-            </div>
+              {/* Charts Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-lg mb-xxl">
+                {/* Top Products Chart */}
+                <StyledCard className="lg:col-span-2">
+                  <h2 className="text-title-md text-clickhouse-ink mb-lg flex items-center gap-2">
+                    <TrendingUp size={20} className="text-clickhouse-yellow" />
+                    Top 5 Products by Revenue
+                  </h2>
+                  {dashboard?.top_products && dashboard.top_products.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={dashboard.top_products}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
+                        <XAxis
+                          dataKey="product_name"
+                          stroke="#888888"
+                          tick={{ fontSize: 12 }}
+                        />
+                        <YAxis stroke="#888888" tick={{ fontSize: 12 }} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#1a1a1a',
+                            border: '1px solid #2a2a2a',
+                            borderRadius: '8px'
+                          }}
+                          formatter={(value) => `₹${value.toFixed(2)}`}
+                          labelStyle={{ color: '#ffffff' }}
+                        />
+                        <Bar dataKey="total_revenue" fill="#faff69" radius={[8, 8, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-300 flex items-center justify-center text-clickhouse-muted">
+                      No sales data available
+                    </div>
+                  )}
+                </StyledCard>
 
-            {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Top Products Chart */}
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-bold text-gray-800 mb-4">
-                  Top 5 Products by Revenue
-                </h2>
-                {analytics?.top_products && analytics.top_products.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={analytics.top_products}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="product_name" 
-                        angle={-45}
-                        textAnchor="end"
-                        height={100}
-                        tick={{ fontSize: 12 }}
-                      />
-                      <YAxis />
-                      <Tooltip formatter={(value) => `₹${value.toFixed(2)}`} />
-                      <Bar dataKey="total_revenue" fill="#3b82f6" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-300 flex items-center justify-center text-gray-500">
-                    No sales data available
+                {/* Inventory Health Pie Chart */}
+                <StyledCard>
+                  <h2 className="text-title-md text-clickhouse-ink mb-lg flex items-center gap-2">
+                    <Package size={20} className="text-clickhouse-yellow" />
+                    Inventory Health
+                  </h2>
+                  {dashboard?.inventory?.health ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: 'OK', value: dashboard.inventory.health.ok, fill: '#22c55e' },
+                            { name: 'Low Stock', value: dashboard.inventory.health.low_stock, fill: '#ef4444' }
+                          ]}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={90}
+                          dataKey="value"
+                        >
+                          <Cell fill="#66e394" />
+                          <Cell fill="#da6161" />
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#1a1a1a',
+                            border: '1px solid #2a2a2a',
+                            borderRadius: '8px'
+                          }}
+                          labelStyle={{ color: '#ffffff' }}
+                        />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-300 flex items-center justify-center text-clickhouse-muted">
+                      No inventory data
+                    </div>
+                  )}
+                </StyledCard>
+              </div>
+
+              {/* Stats Section */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-lg">
+                <StyledCard>
+                  <div className="text-center">
+                    <p className="text-3xl mb-md">✓</p>
+                    <p className="text-sm text-clickhouse-body mb-md">Items OK</p>
+                    <p className="text-stat-display text-clickhouse-emerald">
+                      {dashboard?.inventory?.health?.ok || 0}
+                    </p>
                   </div>
-                )}
-              </div>
+                </StyledCard>
 
-              {/* Inventory Health Chart */}
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-bold text-gray-800 mb-4">
-                  Inventory Health
-                </h2>
-                {analytics?.inventory?.health ? (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={[
-                          { name: 'OK', value: analytics.inventory.health.ok },
-                          { name: 'Low Stock', value: analytics.inventory.health.low_stock }
-                        ]}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={true}
-                        label={({ name, value }) => `${name}: ${value}`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        <Cell fill="#10b981" />
-                        <Cell fill="#ef4444" />
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-300 flex items-center justify-center text-gray-500">
-                    No inventory data available
+                <StyledCard>
+                  <div className="text-center">
+                    <p className="text-3xl mb-md">⚠️</p>
+                    <p className="text-sm text-clickhouse-body mb-md">Low Stock</p>
+                    <p className="text-stat-display text-clickhouse-warning">
+                      {dashboard?.inventory?.health?.low_stock || 0}
+                    </p>
                   </div>
-                )}
+                </StyledCard>
+
+                <StyledCard>
+                  <div className="text-center">
+                    <p className="text-3xl mb-md">📦</p>
+                    <p className="text-sm text-clickhouse-body mb-md">Total Items</p>
+                    <p className="text-stat-display text-clickhouse-yellow">
+                      {dashboard?.inventory?.health?.total_items || 0}
+                    </p>
+                  </div>
+                </StyledCard>
               </div>
             </div>
           </div>

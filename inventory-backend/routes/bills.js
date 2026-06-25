@@ -130,6 +130,15 @@ router.get('/', authMiddleware, async (req, res, next) => {
         finalized_at,
         branch:branches(id, name, location),
         user:users(id, name, email)
+        bill_items(
+          id,
+          product_id,
+          quantity,
+          price_at_sale,
+          item_discount,
+          item_tax,
+          product:products(id, name, base_price, category)
+        )
       `)
       .order('created_at', { ascending: false });
 
@@ -224,7 +233,9 @@ router.get('/:id', authMiddleware, async (req, res, next) => {
 // POST /bills (create)
 router.post('/', authMiddleware, async (req, res, next) => {
   try {
-    const { items, tax_rate = 18 } = req.body;
+    const { bill_items, bill_date, bill_discount = 0, tax_rate = 18 } = req.body;
+    const items = bill_items;  // ✅ Map bill_items to items
+    
     const branch_id = req.user.branch_id;
     const user_id = req.user.user_id;
 
@@ -302,14 +313,14 @@ router.post('/', authMiddleware, async (req, res, next) => {
           user_id,
           status: 'draft',
           subtotal: totals.subtotal,
-          discount_amount: totals.discount_amount,
+          discount_amount: bill_discount,
           tax_amount: totals.tax_amount,
           total_amount: totals.total_amount
         }
       ])
       .select();
 
-    if (billError) throw billError;
+    if (billError || !billData) throw billError;
 
     const bill_id = billData[0].id;
 
@@ -319,7 +330,9 @@ router.post('/', authMiddleware, async (req, res, next) => {
       bill_id
     }));
 
-    const { error: itemError } = await supabase.from('bill_items').insert(billItemsWithBillId);
+    const { error: itemError } = await supabase
+      .from('bill_items')
+      .insert(billItemsWithBillId);
 
     if (itemError) throw itemError;
 
@@ -338,7 +351,6 @@ router.post('/', authMiddleware, async (req, res, next) => {
         tax_amount,
         total_amount,
         created_at,
-        finalized_at,
         branch:branches(id, name, location),
         user:users(id, name, email),
         bill_items(
@@ -348,7 +360,7 @@ router.post('/', authMiddleware, async (req, res, next) => {
           price_at_sale,
           item_discount,
           item_tax,
-          product:products(id, name)
+          product:products(id, name, category)
         )
       `)
       .eq('id', bill_id)
@@ -517,8 +529,7 @@ router.put('/:id/finalize', authMiddleware, async (req, res, next) => {
         id,
         status,
         user_id,
-        branch_id,
-        bill_items(product_id, quantity, price_at_sale)
+        branch_id
       `
       )
       .eq('id', id)
@@ -530,6 +541,13 @@ router.put('/:id/finalize', authMiddleware, async (req, res, next) => {
         error: 'Bill not found'
       });
     }
+
+    const { data: billItems, error: itemsError } = await supabase
+      .from('bill_items')
+      .select('product_id, quantity, price_at_sale')
+      .eq('bill_id', id);
+
+    if (itemsError) throw itemsError;
 
     // Check access
     if (!canAccessBill(req, bill)) {
@@ -548,7 +566,7 @@ router.put('/:id/finalize', authMiddleware, async (req, res, next) => {
     }
 
     // Create sales logs
-    await createSalesLogs(id, bill.branch_id, bill.bill_items);
+    await createSalesLogs(id, bill.branch_id, billItems);
 
     // Update bill status
     const { error: updateError } = await supabase
@@ -574,16 +592,7 @@ router.put('/:id/finalize', authMiddleware, async (req, res, next) => {
         tax_amount,
         total_amount,
         created_at,
-        finalized_at,
-        bill_items(
-          id,
-          product_id,
-          quantity,
-          price_at_sale,
-          item_discount,
-          item_tax,
-          product:products(id, name)
-        )
+        finalized_at
       `)
       .eq('id', id)
       .single();

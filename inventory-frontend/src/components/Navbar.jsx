@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useNavigate } from 'react-router-dom'
+import { Menu, LogOut, Settings, User } from 'lucide-react'
 
 export default function Navbar() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const [showMenu, setShowMenu] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
 
   const handleLogout = () => {
     logout()
@@ -13,38 +14,84 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white font-bold">
-          I
-        </div>
-        <span className="text-lg font-semibold text-gray-800">Inventory System</span>
-      </div>
-
-      <div className="flex items-center gap-4">
-        <div className="text-sm text-gray-600">
-          <p className="font-medium text-gray-800">{user?.name}</p>
-          <p className="text-xs text-gray-500">{user?.role}</p>
-        </div>
-
-        <div className="relative">
-          <button
-            onClick={() => setShowMenu(!showMenu)}
-            className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition"
-          >
-            {user?.name?.charAt(0).toUpperCase()}
-          </button>
-
-          {showMenu && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-              <button
-                onClick={handleLogout}
-                className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
-              >
-                Logout
-              </button>
+    <nav className="bg-clickhouse-surface-card border-b border-clickhouse-hairline sticky top-0 z-40">
+      <div className="px-lg py-md">
+        <div className="flex items-center justify-between max-w-7xl mx-auto">
+          {/* Left: Logo */}
+          <div className="flex items-center gap-md">
+            <div className="w-10 h-10 bg-clickhouse-yellow rounded-md flex items-center justify-center">
+              <span className="text-clickhouse-canvas font-bold">I</span>
             </div>
-          )}
+            <div>
+              <h2 className="text-sm font-semibold text-clickhouse-ink">Inventory</h2>
+              <p className="text-xs text-clickhouse-muted">Management</p>
+            </div>
+          </div>
+
+          {/* Right: User Menu */}
+          <div className="flex items-center gap-md">
+            {/* User Info */}
+            <div className="hidden sm:flex items-center gap-md">
+              <div className="w-10 h-10 rounded-md bg-clickhouse-surface-elevated flex items-center justify-center text-clickhouse-yellow font-bold text-sm">
+                {user?.email?.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-clickhouse-ink">{user?.name}</p>
+                <p className="text-xs text-clickhouse-muted capitalize">{user?.role}</p>
+              </div>
+            </div>
+
+            {/* User Menu Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="p-2 hover:bg-clickhouse-surface-elevated rounded-md transition-colors duration-200"
+              >
+                <Menu size={20} className="text-clickhouse-body" />
+              </button>
+
+              {/* Dropdown Menu */}
+              {showUserMenu && (
+                <div className="absolute right-0 mt-2 w-48 bg-clickhouse-surface-card border border-clickhouse-hairline rounded-lg py-2 z-50 animate-slide-up">
+                  <div className="px-md py-2 border-b border-clickhouse-hairline">
+                    <p className="text-sm font-medium text-clickhouse-ink">{user?.email}</p>
+                    <p className="text-xs text-clickhouse-muted capitalize">{user?.role}</p>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false)
+                      navigate('/profile')
+                    }}
+                    className="w-full text-left px-md py-2 text-sm text-clickhouse-body hover:bg-clickhouse-surface-elevated hover:text-clickhouse-yellow transition-colors duration-200 flex items-center gap-2"
+                  >
+                    <User size={16} /> Profile
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false)
+                    }}
+                    className="w-full text-left px-md py-2 text-sm text-clickhouse-body hover:bg-clickhouse-surface-elevated hover:text-clickhouse-yellow transition-colors duration-200 flex items-center gap-2"
+                  >
+                    <Settings size={16} /> Settings
+                  </button>
+
+                  <div className="border-t border-clickhouse-hairline my-2"></div>
+
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false)
+                      handleLogout()
+                    }}
+                    className="w-full text-left px-md py-2 text-sm text-clickhouse-rose hover:bg-clickhouse-surface-elevated transition-colors duration-200 flex items-center gap-2"
+                  >
+                    <LogOut size={16} /> Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </nav>

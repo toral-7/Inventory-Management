@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { Search, Plus, Edit2, Trash2 } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Sidebar from '../components/Sidebar'
+import StyledCard from '../components/styled/StyledCard'
+import StyledButton from '../components/styled/StyledButton'
+import StyledInput from '../components/styled/StyledInput'
 import Modal from '../components/Modal'
 import client from '../api/client'
 
@@ -10,17 +14,18 @@ export default function Products() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [showModal, setShowModal] = useState(false)
-  const [editingId, setEditingId] = useState(null)
-  const [suppliers, setSuppliers] = useState([])
-  const [searchTerm, setSearchTerm] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingProduct, setEditingProduct] = useState(null)
   const [formData, setFormData] = useState({
     name: '',
     base_price: '',
     category: '',
-    supplier_id: '',
-    reorder_level: ''
+    reorder_level: '',
+    supplier_id: ''
   })
+  const [suppliers, setSuppliers] = useState([])
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     fetchProducts()
@@ -45,40 +50,42 @@ export default function Products() {
     try {
       const response = await client.get('/suppliers')
       if (response.data.success) {
-        setSuppliers(response.data.suppliers || [])
+        setSuppliers(response.data.suppliers)
       }
     } catch (err) {
       console.error('Failed to fetch suppliers')
     }
   }
 
-  const handleOpenModal = (product = null) => {
-    if (product) {
-      setEditingId(product.id)
-      setFormData({
-        name: product.name,
-        base_price: product.base_price,
-        category: product.category || '',
-        supplier_id: product.supplier?.id || '',
-        reorder_level: product.reorder_level
-      })
-    } else {
-      setEditingId(null)
-      setFormData({
-        name: '',
-        base_price: '',
-        category: '',
-        supplier_id: '',
-        reorder_level: ''
-      })
-    }
-    setShowModal(true)
+  const handleCreate = () => {
+    setEditingProduct(null)
+    setFormData({
+      name: '',
+      base_price: '',
+      category: '',
+      reorder_level: '',
+      supplier_id: ''
+    })
+    setIsModalOpen(true)
+  }
+
+  const handleEdit = (product) => {
+    setEditingProduct(product)
+    setFormData({
+      name: product.name,
+      base_price: product.base_price,
+      category: product.category,
+      reorder_level: product.reorder_level,
+      supplier_id: product.supplier_id || ''
+    })
+    setIsModalOpen(true)
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setSubmitting(true)
+
     try {
-      // Convert string inputs to proper types
       const submitData = {
         name: formData.name,
         base_price: parseFloat(formData.base_price),
@@ -87,41 +94,48 @@ export default function Products() {
         supplier_id: formData.supplier_id || null
       }
 
-      if (editingId) {
-        await client.put(`/products/${editingId}`, submitData)
+      if (editingProduct) {
+        await client.put(`/products/${editingProduct.id}`, submitData)
       } else {
         await client.post('/products', submitData)
       }
-      setShowModal(false)
+
+      setIsModalOpen(false)
       fetchProducts()
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to save product')
+      alert(err.response?.data?.error || 'Failed to save product')
+    } finally {
+      setSubmitting(false)
     }
   }
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) return
+    if (!window.confirm('Are you sure?')) return
+
     try {
       await client.delete(`/products/${id}`)
       fetchProducts()
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to delete product')
+      alert(err.response?.data?.error || 'Failed to delete product')
     }
   }
 
   const filteredProducts = products.filter((p) =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.category && p.category.toLowerCase().includes(searchTerm.toLowerCase()))
+    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.category.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-gray-100">
+      <div className="flex h-screen bg-clickhouse-canvas">
         <Sidebar />
         <div className="flex-1 flex flex-col">
           <Navbar />
           <main className="flex-1 flex items-center justify-center">
-            <div className="text-xl text-gray-600">Loading products...</div>
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-full border-4 border-clickhouse-hairline border-t-clickhouse-yellow animate-spin mx-auto mb-lg"></div>
+              <p className="text-clickhouse-body">Loading products...</p>
+            </div>
           </main>
         </div>
       </div>
@@ -129,189 +143,169 @@ export default function Products() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-clickhouse-canvas">
       <Sidebar />
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col overflow-hidden">
         <Navbar />
-        <main className="flex-1 overflow-auto p-8">
-          <div className="max-w-6xl">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-800">Products</h1>
-                <p className="text-gray-600 mt-2">Manage product catalog</p>
-              </div>
-              {user?.role === 'admin' && (
-                <button
-                  onClick={() => handleOpenModal()}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
-                >
-                  + Add Product
-                </button>
-              )}
-            </div>
-
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                {error}
-              </div>
-            )}
-
-            <div className="bg-white rounded-lg shadow p-6 mb-6">
-              <input
-                type="text"
-                placeholder="Search by name or category..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-            </div>
-
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-100 border-b">
-                  <tr>
-                    <th className="text-left py-4 px-6">Name</th>
-                    <th className="text-left py-4 px-6">Price</th>
-                    <th className="text-left py-4 px-6">Category</th>
-                    <th className="text-left py-4 px-6">Supplier</th>
-                    <th className="text-left py-4 px-6">Reorder Level</th>
-                    <th className="text-center py-4 px-6">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredProducts.map((product) => (
-                    <tr key={product.id} className="border-b hover:bg-gray-50">
-                      <td className="py-4 px-6">{product.name}</td>
-                      <td className="py-4 px-6">₹{parseFloat(product.base_price).toFixed(2)}</td>
-                      <td className="py-4 px-6">{product.category || '-'}</td>
-                      <td className="py-4 px-6">{product.supplier?.name || '-'}</td>
-                      <td className="py-4 px-6">{product.reorder_level}</td>
-                      <td className="py-4 px-6 text-center space-x-2">
-                        {user?.role === 'admin' && (
-                          <>
-                            <button
-                              onClick={() => handleOpenModal(product)}
-                              className="text-blue-500 hover:text-blue-700"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDelete(product.id)}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              Delete
-                            </button>
-                          </>
-                        )}
-                        {user?.role === 'staff' && <span className="text-gray-500 text-sm">View only</span>}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {filteredProducts.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  No products found
+        <main className="flex-1 overflow-auto">
+          <div className="p-xl">
+            <div className="max-w-7xl">
+              {/* Header */}
+              <div className="mb-lg flex items-center justify-between">
+                <div>
+                  <h1 className="text-display-sm text-clickhouse-ink mb-md">Products</h1>
+                  <p className="text-body-md text-clickhouse-body">Manage your product catalog</p>
                 </div>
-              )}
+                {user?.role === 'admin' && (
+                  <StyledButton
+                    variant="primary"
+                    onClick={handleCreate}
+                    icon={<Plus size={18} />}
+                  >
+                    Add Product
+                  </StyledButton>
+                )}
+              </div>
+
+              {/* Search */}
+              <StyledCard className="mb-lg">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-clickhouse-muted" size={18} />
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-3 py-2.5 bg-clickhouse-surface-card border border-clickhouse-hairline rounded-md text-clickhouse-ink placeholder-clickhouse-muted focus:outline-none focus:border-clickhouse-yellow transition-all duration-200"
+                  />
+                </div>
+              </StyledCard>
+
+              {/* Table */}
+              <StyledCard>
+                {filteredProducts.length === 0 ? (
+                  <div className="text-center py-xl">
+                    <p className="text-clickhouse-body">No products found</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Name</th>
+                          <th>Category</th>
+                          <th>Price</th>
+                          <th>Reorder Level</th>
+                          <th>Supplier</th>
+                          {user?.role === 'admin' && <th>Actions</th>}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredProducts.map((product) => (
+                          <tr key={product.id}>
+                            <td className="font-medium text-clickhouse-ink">{product.name}</td>
+                            <td>{product.category}</td>
+                            <td className="text-clickhouse-yellow font-semibold">₹{product.base_price}</td>
+                            <td>{product.reorder_level}</td>
+                            <td className="text-clickhouse-muted">{product.supplier_name || '-'}</td>
+                            {user?.role === 'admin' && (
+                              <td>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => handleEdit(product)}
+                                    className="p-2 hover:bg-clickhouse-surface-elevated rounded-md transition-colors"
+                                  >
+                                    <Edit2 size={16} className="text-clickhouse-yellow" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(product.id)}
+                                    className="p-2 hover:bg-clickhouse-surface-elevated rounded-md transition-colors"
+                                  >
+                                    <Trash2 size={16} className="text-clickhouse-rose" />
+                                  </button>
+                                </div>
+                              </td>
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </StyledCard>
             </div>
           </div>
         </main>
       </div>
 
+      {/* Modal */}
       <Modal
-        isOpen={showModal}
-        title={editingId ? 'Edit Product' : 'Add Product'}
-        onClose={() => setShowModal(false)}
-        size="md"
+        isOpen={isModalOpen}
+        title={editingProduct ? 'Edit Product' : 'Create Product'}
+        onClose={() => setIsModalOpen(false)}
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Product Name *
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-lg">
+          <StyledInput
+            label="Product Name"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            required
+          />
+
+          <StyledInput
+            label="Base Price"
+            type="number"
+            value={formData.base_price}
+            onChange={(e) => setFormData({ ...formData, base_price: e.target.value })}
+            required
+          />
+
+          <StyledInput
+            label="Category"
+            value={formData.category}
+            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+            required
+          />
+
+          <StyledInput
+            label="Reorder Level"
+            type="number"
+            value={formData.reorder_level}
+            onChange={(e) => setFormData({ ...formData, reorder_level: e.target.value })}
+            required
+          />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Base Price *
-            </label>
-            <input
-              type="number"
-              required
-              step="0.01"
-              min="0"
-              value={formData.base_price}
-              onChange={(e) => setFormData({ ...formData, base_price: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Category
-            </label>
-            <input
-              type="text"
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Supplier
-            </label>
+            <label className="block text-sm font-medium text-clickhouse-ink mb-2">Supplier</label>
             <select
               value={formData.supplier_id}
               onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full bg-clickhouse-surface-card border border-clickhouse-hairline rounded-md px-3 py-2.5 text-clickhouse-ink focus:outline-none focus:border-clickhouse-yellow transition-all duration-200"
             >
               <option value="">Select Supplier</option>
               {suppliers.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
+                <option key={s.id} value={s.id}>{s.name}</option>
               ))}
             </select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Reorder Level *
-            </label>
-            <input
-              type="number"
-              required
-              min="0"
-              value={formData.reorder_level}
-              onChange={(e) => setFormData({ ...formData, reorder_level: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-          </div>
-
-          <div className="flex gap-3 pt-4">
-            <button
+          <div className="flex gap-2 pt-lg border-t border-clickhouse-hairline">
+            <StyledButton
               type="submit"
-              className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 rounded-lg"
+              variant="primary"
+              loading={submitting}
+              className="flex-1"
             >
-              {editingId ? 'Update' : 'Create'}
-            </button>
-            <button
+              {editingProduct ? 'Update' : 'Create'}
+            </StyledButton>
+            <StyledButton
               type="button"
-              onClick={() => setShowModal(false)}
-              className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 rounded-lg"
+              variant="secondary"
+              onClick={() => setIsModalOpen(false)}
+              className="flex-1"
             >
               Cancel
-            </button>
+            </StyledButton>
           </div>
         </form>
       </Modal>

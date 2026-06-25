@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { LayoutDashboard, Package, Layers, FileText, TrendingUp, Truck, BarChart3 } from 'lucide-react'
 
 export default function Sidebar() {
   const location = useLocation()
@@ -7,37 +8,60 @@ export default function Sidebar() {
   const isActive = (path) => location.pathname === path
 
   const navItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { path: '/products', label: 'Products', icon: '📦' },
-    { path: '/inventory', label: 'Inventory', icon: '📋' },
-    { path: '/bills', label: 'Bills', icon: '🧾' },
-    { path: '/analytics', label: 'Analytics', icon: '📈' },
-    { path: '/suppliers', label: 'Suppliers', icon: '🚚' }
+    { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/products', label: 'Products', icon: Package },
+    { path: '/inventory', label: 'Inventory', icon: Layers },
+    { path: '/bills', label: 'Bills', icon: FileText },
+    { path: '/suppliers', label: 'Suppliers', icon: Truck },
+    { path: '/analytics', label: 'Analytics', icon: TrendingUp },
   ]
 
   return (
-    <aside className="w-64 bg-gray-900 text-white p-6 h-screen overflow-y-auto">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold">Inventory</h2>
-        <p className="text-gray-400 text-sm">Management System</p>
+    <aside className="w-64 bg-clickhouse-canvas border-r border-clickhouse-hairline h-screen overflow-y-auto sticky top-0 p-lg flex flex-col">
+      {/* Logo Section */}
+      <div className="mb-xxl">
+        <div className="flex items-center gap-md mb-2">
+          <div className="w-12 h-12 bg-clickhouse-yellow rounded-lg flex items-center justify-center">
+            <span className="text-clickhouse-canvas font-bold text-lg">📦</span>
+          </div>
+          <div>
+            <h1 className="text-sm font-bold text-clickhouse-yellow">Inventory Management</h1>
+            <p className="text-xs text-clickhouse-muted">System</p>
+          </div>
+        </div>
       </div>
 
-      <nav className="space-y-2">
-        {navItems.map((item) => (
-          <Link
-            key={item.path}
-            to={item.path}
-            className={`block px-4 py-3 rounded-lg transition ${
-              isActive(item.path)
-                ? 'bg-blue-500 text-white'
-                : 'text-gray-300 hover:bg-gray-800'
-            }`}
-          >
-            <span className="mr-3">{item.icon}</span>
-            {item.label}
-          </Link>
-        ))}
+      {/* Navigation Menu */}
+      <nav className="flex-1 space-y-xs">
+        {navItems.map((item) => {
+          const Icon = item.icon
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`
+                flex items-center gap-md px-md py-2 rounded-md
+                transition-all duration-200
+                ${
+                  isActive(item.path)
+                    ? 'bg-clickhouse-yellow bg-opacity-10 border-l-2 border-clickhouse-yellow text-clickhouse-yellow'
+                    : 'text-clickhouse-body hover:bg-clickhouse-surface-soft hover:text-clickhouse-ink'
+                }
+              `}
+            >
+              <Icon size={20} />
+              <span className="text-sm font-medium">{item.label}</span>
+            </Link>
+          )
+        })}
       </nav>
+
+      {/* Footer Info */}
+      <div className="border-t border-clickhouse-hairline pt-lg mt-lg">
+        <p className="text-xs text-clickhouse-muted text-center">
+          Inventory Management System
+        </p>
+      </div>
     </aside>
   )
 }

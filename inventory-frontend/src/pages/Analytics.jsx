@@ -1,68 +1,68 @@
 import React, { useState, useEffect } from 'react'
-import { useAuth } from '../context/AuthContext'
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { TrendingUp, Calendar } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Sidebar from '../components/Sidebar'
+import StyledCard from '../components/styled/StyledCard'
 import client from '../api/client'
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from 'recharts'
 
 export default function Analytics() {
-  const { user } = useAuth()
-  const [monthlyReport, setMonthlyReport] = useState(null)
-  const [forecast, setForecast] = useState(null)
-  const [dashboard, setDashboard] = useState(null)
+  const [analytics, setAnalytics] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [selectedPeriod, setSelectedPeriod] = useState('monthly')
 
   useEffect(() => {
-    const fetchAllAnalytics = async () => {
-      try {
-        setLoading(true)
-        
-        // Fetch all three endpoints in parallel
-        const [dashRes, forecastRes, reportRes] = await Promise.all([
-          client.get('/analytics/dashboard'),
-          client.get('/analytics/forecast'),
-          client.get('/analytics/monthly-report')
-        ])
+    fetchAnalytics()
+  }, [selectedPeriod])
 
-        if (dashRes.data.success) {
-          setDashboard(dashRes.data.dashboard)
-        }
-        if (forecastRes.data.success) {
-          setForecast(forecastRes.data.forecast)
-        }
-        if (reportRes.data.success) {
-          setMonthlyReport(reportRes.data.monthly_report)
-        }
-      } catch (err) {
-        setError(err.message)
-      } finally {
-        setLoading(false)
+  const fetchAnalytics = async () => {
+    try {
+      setLoading(true)
+      const response = await client.get(`/analytics/dashboard`)
+      if (response.data.success) {
+        setAnalytics(response.data.dashboard)
       }
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
     }
-
-    fetchAllAnalytics()
-  }, [])
+  }
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-gray-100">
+      <div className="flex h-screen bg-clickhouse-canvas">
         <Sidebar />
         <div className="flex-1 flex flex-col">
           <Navbar />
           <main className="flex-1 flex items-center justify-center">
-            <div className="text-xl text-gray-600">Loading analytics...</div>
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-full border-4 border-clickhouse-hairline border-t-clickhouse-yellow animate-spin mx-auto mb-lg"></div>
+              <p className="text-clickhouse-body">Loading analytics...</p>
+            </div>
+          </main>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-screen bg-clickhouse-canvas">
+        <Sidebar />
+        <div className="flex-1 flex flex-col">
+          <Navbar />
+          <main className="flex-1 flex items-center justify-center p-lg">
+            <StyledCard className="max-w-md text-center">
+              <p className="text-clickhouse-body mb-lg">{error}</p>
+              <button
+                onClick={fetchAnalytics}
+                className="btn btn-primary"
+              >
+                Try Again
+              </button>
+            </StyledCard>
           </main>
         </div>
       </div>
@@ -70,174 +70,178 @@ export default function Analytics() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-clickhouse-canvas">
       <Sidebar />
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col overflow-hidden">
         <Navbar />
-        <main className="flex-1 overflow-auto p-8">
-          <div className="max-w-7xl">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Analytics</h1>
-            <p className="text-gray-600 mb-8">Detailed reports and insights</p>
-
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                {error}
+        <main className="flex-1 overflow-auto">
+          <div className="p-xl">
+            <div className="max-w-7xl">
+              {/* Header */}
+              <div className="mb-lg">
+                <h1 className="text-display-sm text-clickhouse-ink mb-md">Analytics</h1>
+                <p className="text-body-md text-clickhouse-body">Detailed insights into your inventory and sales</p>
               </div>
-            )}
 
-            {/* Monthly Revenue Trend */}
-            <div className="bg-white rounded-lg shadow p-6 mb-8">
-              <h2 className="text-lg font-bold text-gray-800 mb-4">
-                Monthly Revenue Trend ({monthlyReport?.year})
-              </h2>
-              {monthlyReport?.monthly_data ? (
-                <ResponsiveContainer width="100%" height={400}>
-                  <LineChart data={monthlyReport.monthly_data}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => `₹${value.toFixed(2)}`} />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="revenue"
-                      stroke="#3b82f6"
-                      strokeWidth={2}
-                      dot={{ fill: '#3b82f6' }}
-                      name="Revenue"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-400 flex items-center justify-center text-gray-500">
-                  No data available
+              {/* Period Selector */}
+              <StyledCard className="mb-lg">
+                <div className="flex items-center gap-2">
+                  <Calendar size={18} className="text-clickhouse-yellow" />
+                  <select
+                    value={selectedPeriod}
+                    onChange={(e) => setSelectedPeriod(e.target.value)}
+                    className="bg-clickhouse-surface-card border border-clickhouse-hairline rounded-md px-3 py-2 text-clickhouse-ink focus:outline-none focus:border-clickhouse-yellow"
+                  >
+                    <option value="daily">Daily</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                  </select>
                 </div>
-              )}
-              <div className="grid grid-cols-3 gap-4 mt-4">
-                <div className="bg-blue-50 p-4 rounded">
-                  <p className="text-sm text-gray-600">Total Revenue</p>
-                  <p className="text-2xl font-bold text-blue-600">
-                    ₹{monthlyReport?.total_revenue}
-                  </p>
-                </div>
-                <div className="bg-green-50 p-4 rounded">
-                  <p className="text-sm text-gray-600">Total Bills</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {monthlyReport?.total_bills}
-                  </p>
-                </div>
-                <div className="bg-purple-50 p-4 rounded">
-                  <p className="text-sm text-gray-600">Avg Monthly</p>
-                  <p className="text-2xl font-bold text-purple-600">
-                    ₹{monthlyReport?.average_monthly_revenue}
-                  </p>
-                </div>
-              </div>
-            </div>
+              </StyledCard>
 
-            {/* Top 10 Products */}
-            <div className="bg-white rounded-lg shadow p-6 mb-8">
-              <h2 className="text-lg font-bold text-gray-800 mb-4">
-                Top 10 Products by Revenue
-              </h2>
-              {dashboard?.top_products && dashboard.top_products.slice(0, 10).length > 0 ? (
-                <ResponsiveContainer width="100%" height={400}>
-                  <BarChart data={dashboard.top_products.slice(0, 10)}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="product_name"
-                      angle={-45}
-                      textAnchor="end"
-                      height={100}
-                      tick={{ fontSize: 12 }}
-                    />
-                    <YAxis />
-                    <Tooltip formatter={(value) => `₹${value.toFixed(2)}`} />
-                    <Bar dataKey="total_revenue" fill="#10b981" />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-400 flex items-center justify-center text-gray-500">
-                  No data available
-                </div>
-              )}
-            </div>
+              {/* Revenue Chart */}
+              <StyledCard className="mb-lg">
+                <h2 className="text-title-md text-clickhouse-ink mb-lg flex items-center gap-2">
+                  <TrendingUp size={20} className="text-clickhouse-yellow" />
+                  Monthly Revenue
+                </h2>
+                {analytics?.monthly_report && analytics.monthly_report.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={analytics.monthly_report}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
+                      <XAxis dataKey="month" stroke="#888888" />
+                      <YAxis stroke="#888888" />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#1a1a1a',
+                          border: '1px solid #2a2a2a',
+                          borderRadius: '8px'
+                        }}
+                        formatter={(value) => `₹${value.toFixed(2)}`}
+                        labelStyle={{ color: '#ffffff' }}
+                      />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="revenue"
+                        stroke="#faff69"
+                        strokeWidth={2}
+                        dot={{ fill: '#faff69', r: 4 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-300 flex items-center justify-center text-clickhouse-muted">
+                    No data available
+                  </div>
+                )}
+              </StyledCard>
 
-            {/* Stock Forecast */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-bold text-gray-800 mb-4">
-                30-Day Stock Forecast
-              </h2>
-              {forecast?.products && forecast.products.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-3 px-4">Product</th>
-                        <th className="text-center py-3 px-4">Current Stock</th>
-                        <th className="text-center py-3 px-4">Reorder Level</th>
-                        <th className="text-center py-3 px-4">Avg Daily Sales</th>
-                        <th className="text-center py-3 px-4">Days Until Stockout</th>
-                        <th className="text-center py-3 px-4">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {forecast.products.map((product, index) => (
-                        <tr key={`forecast-${index}`} className="border-b hover:bg-gray-50">
-                          <td className="py-3 px-4">{product.product_name}</td>
-                          <td className="text-center py-3 px-4">{product.current_stock}</td>
-                          <td className="text-center py-3 px-4">{product.reorder_level}</td>
-                          <td className="text-center py-3 px-4">{product.avg_daily_sales}</td>
-                          <td className="text-center py-3 px-4">
-                            {product.days_until_stockout === 999 ? '∞' : product.days_until_stockout}
-                          </td>
-                          <td className="text-center py-3 px-4">
-                            <span
-                              className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                product.status === 'critical'
-                                  ? 'bg-red-100 text-red-700'
-                                  : product.status === 'warning'
-                                  ? 'bg-yellow-100 text-yellow-700'
-                                  : 'bg-green-100 text-green-700'
-                              }`}
-                            >
-                              {product.status.toUpperCase()}
-                            </span>
-                          </td>
-                        </tr>
+              {/* Sales Forecast */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-lg mb-lg">
+                <StyledCard>
+                  <h2 className="text-title-md text-clickhouse-ink mb-lg">Sales Forecast</h2>
+                  {analytics?.forecast && analytics.forecast.length > 0 ? (
+                    <div className="space-y-2">
+                      {analytics.forecast.slice(0, 5).map((item, idx) => (
+                        <div key={idx} className="flex justify-between items-center pb-2 border-b border-clickhouse-hairline last:border-b-0">
+                          <span className="text-clickhouse-body">{item.product_name}</span>
+                          <span className="text-clickhouse-yellow font-semibold">{item.forecasted_demand}</span>
+                        </div>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  No forecast data available
-                </div>
-              )}
+                    </div>
+                  ) : (
+                    <p className="text-clickhouse-muted text-center py-lg">No forecast data</p>
+                  )}
+                </StyledCard>
 
-              {/* Forecast Summary */}
-              {forecast && (
-                <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t">
-                  <div className="bg-green-50 p-4 rounded text-center">
-                    <p className="text-sm text-gray-600">Products OK</p>
-                    <p className="text-2xl font-bold text-green-600">
-                      {forecast.total_products - forecast.critical_products - forecast.warning_products}
-                    </p>
+                <StyledCard>
+                  <h2 className="text-title-md text-clickhouse-ink mb-lg">Inventory Status</h2>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-clickhouse-body text-sm">OK Items</span>
+                        <span className="text-clickhouse-emerald font-semibold">
+                          {analytics?.inventory?.health?.ok || 0}
+                        </span>
+                      </div>
+                      <div className="w-full bg-clickhouse-hairline rounded-full h-2">
+                        <div
+                          className="bg-clickhouse-emerald h-2 rounded-full"
+                          style={{
+                            width: `${
+                              ((analytics?.inventory?.health?.ok || 0) /
+                                (analytics?.inventory?.health?.total_items || 1)) *
+                              100
+                            }%`
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-clickhouse-body text-sm">Low Stock</span>
+                        <span className="text-clickhouse-rose font-semibold">
+                          {analytics?.inventory?.health?.low_stock || 0}
+                        </span>
+                      </div>
+                      <div className="w-full bg-clickhouse-hairline rounded-full h-2">
+                        <div
+                          className="bg-clickhouse-rose h-2 rounded-full"
+                          style={{
+                            width: `${
+                              ((analytics?.inventory?.health?.low_stock || 0) /
+                                (analytics?.inventory?.health?.total_items || 1)) *
+                              100
+                            }%`
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-clickhouse-body text-sm">Total Items</span>
+                        <span className="text-clickhouse-yellow font-semibold">
+                          {analytics?.inventory?.health?.total_items || 0}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="bg-yellow-50 p-4 rounded text-center">
-                    <p className="text-sm text-gray-600">Warning</p>
-                    <p className="text-2xl font-bold text-yellow-600">
-                      {forecast.warning_products}
-                    </p>
-                  </div>
-                  <div className="bg-red-50 p-4 rounded text-center">
-                    <p className="text-sm text-gray-600">Critical</p>
-                    <p className="text-2xl font-bold text-red-600">
-                      {forecast.critical_products}
-                    </p>
-                  </div>
-                </div>
-              )}
+                </StyledCard>
+              </div>
+
+              {/* Key Metrics */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-lg">
+                <StyledCard>
+                  <p className="text-sm text-clickhouse-body mb-2">Total Revenue</p>
+                  <p className="text-stat-display text-clickhouse-yellow">
+                    ₹{analytics?.summary?.total_revenue || 0}
+                  </p>
+                </StyledCard>
+
+                <StyledCard>
+                  <p className="text-sm text-clickhouse-body mb-2">Total Bills</p>
+                  <p className="text-stat-display text-clickhouse-emerald">
+                    {analytics?.summary?.total_bills || 0}
+                  </p>
+                </StyledCard>
+
+                <StyledCard>
+                  <p className="text-sm text-clickhouse-body mb-2">Total Products</p>
+                  <p className="text-stat-display text-clickhouse-blue">
+                    {analytics?.summary?.total_products || 0}
+                  </p>
+                </StyledCard>
+
+                <StyledCard>
+                  <p className="text-sm text-clickhouse-body mb-2">Low Stock Items</p>
+                  <p className="text-stat-display text-clickhouse-rose">
+                    {analytics?.summary?.low_stock_items || 0}
+                  </p>
+                </StyledCard>
+              </div>
             </div>
           </div>
         </main>

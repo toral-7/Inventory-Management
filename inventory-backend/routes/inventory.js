@@ -84,6 +84,8 @@ router.get('/', authMiddleware, async (req, res, next) => {
       .from('inventory')
       .select(`
         id,
+        branch_id,
+        product_id,
         product:products(id, name, base_price, category, reorder_level),
         branch:branches(id, name, location),
         quantity_in_stock,
@@ -125,6 +127,8 @@ router.get('/:id', authMiddleware, async (req, res, next) => {
       .from('inventory')
       .select(`
         id,
+        branch_id,
+        product_id,
         product:products(id, name, base_price, category, reorder_level),
         branch:branches(id, name, location),
         quantity_in_stock,
@@ -227,6 +231,126 @@ router.get('/alerts/low-stock', authMiddleware, async (req, res, next) => {
       success: true,
       count: enrichedItems.length,
       low_stock_items: enrichedItems
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /inventory
+// Create new inventory entry (Admin only)
+router.post('/', authMiddleware, async (req, res, next) => {
+  try {
+    // Admin only
+    if (!isAdmin(req)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Only admins can create inventory'
+      });
+    }
+
+    const { product_id, branch_id, quantity, reorder_level } = req.body;
+
+    // Validate input
+    if (!product_id || !branch_id || quantity === undefined || reorder_level === undefined) {
+      return res.status(400).json({
+        success: false,
+        error: 'product_id, branch_id, quantity, and reorder_level are required'
+      });
+    }
+
+    if (!Number.isInteger(quantity) || quantity < 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'quantity must be a non-negative integer'
+      });
+    }
+
+    if (!Number.isInteger(reorder_level) || reorder_level < 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'reorder_level must be a non-negative integer'
+      });
+    }
+
+    // Check if product exists
+    const { data: product, error: productError } = await supabase
+      .from('products')
+      .select('id, name, base_price, category, reorder_level')
+      .eq('id', product_id)
+      .single();
+
+    if (productError || !product) {
+      return res.status(404).json({
+        success: false,
+        error: 'Product not found'
+      });
+    }
+
+    // Check if branch exists
+    const { data: branch, error: branchError } = await supabase
+      .from('branches')
+      .select('id, name, location')
+      .eq('id', branch_id)
+      .single();
+
+    if (branchError || !branch) {
+      return res.status(404).json({
+        success: false,
+        error: 'Branch not found'
+      });
+    }
+
+    // Check if inventory entry already exists
+    const { data: existing } = await supabase
+      .from('inventory')
+      .select('id')
+      .eq('product_id', product_id)
+      .eq('branch_id', branch_id)
+      .single();
+
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        error: 'Inventory entry already exists for this product and branch'
+      });
+    }
+
+    // Create inventory entry
+    const { data, error } = await supabase
+      .from('inventory')
+      .insert([
+        {
+          product_id,
+          branch_id,
+          quantity_in_stock: quantity,
+          reorder_level,
+          last_restocked_at: new Date().toISOString()
+        }
+      ])
+      .select(`
+        id,
+        product:products(id, name, base_price, category, reorder_level),
+        branch:branches(id, name, location),
+        quantity_in_stock,
+        reorder_level,
+        last_restocked_at
+      `);
+
+    if (error) throw error;
+
+    // Auto-manage alerts
+    await manageAlerts(product_id, branch_id, quantity, reorder_level);
+
+    const status = quantity < reorder_level ? 'low_stock' : 'ok';
+
+    res.status(201).json({
+      success: true,
+      message: 'Inventory entry created successfully',
+      inventory: {
+        ...data[0],
+        status
+      }
     });
   } catch (err) {
     next(err);
