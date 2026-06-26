@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { AlertCircle, Eye, EyeOff, Trash2, Edit2, Plus } from 'lucide-react'
+import { AlertCircle, Eye, EyeOff, Trash2, Edit2 } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Sidebar from '../components/Sidebar'
 import Modal from '../components/Modal'
 import StyledCard from '../components/styled/StyledCard'
 import StyledInput from '../components/styled/StyledInput'
 import client from '../api/client'
+import StyledButton from '../components/styled/StyledButton'
 
 export default function Settings() {
   const { user, logout } = useAuth()
@@ -109,6 +110,8 @@ export default function Settings() {
   const handleEditStaff = (staff) => {
     setEditingStaff(staff)
     setStaffFormData({
+      name: staff.name,
+      email: staff.eamil || '',
       branch_id: staff.branch_id || '',
       status: staff.status || 'active'
     })
@@ -365,13 +368,7 @@ export default function Settings() {
             {activeTab === 'staff' && isAdmin && (
               <div className="space-y-lg">
                 <StyledCard>
-                  <div className="flex items-center justify-between mb-lg">
-                    <h2 className="text-lg font-bold text-clickhouse-ink">Staff Members</h2>
-                    <button className="btn btn-primary inline-flex items-center gap-xs">
-                      <Plus size={18} />
-                      Add Staff
-                    </button>
-                  </div>
+                  <h2 className="text-lg font-bold text-clickhouse-ink mb-lg">Staff Members</h2>
 
                   {loading ? (
                     <p className="text-clickhouse-body text-center py-lg">Loading staff...</p>
@@ -619,9 +616,18 @@ export default function Settings() {
       <Modal
         isOpen={isStaffModalOpen}
         onClose={() => setIsStaffModalOpen(false)}
-        title="Edit Staff Member"
-        size="md"
+        title={editingStaff ? 'Edit Staff' : 'Add Staff'}
       >
+
+        {/* <form onSubmit={handleSaveStaff} className='space-y-log'>
+          <StyledInput
+            label="Staff Name"
+            value={formData.name}
+            onChange={(e) => setStaffFormData({...formData, name: e.target.value })}
+          />
+
+        </form> */}
+
         {editingStaff && (
           <div className="space-y-md">
             <div>

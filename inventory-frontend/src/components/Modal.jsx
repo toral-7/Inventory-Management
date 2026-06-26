@@ -1,94 +1,45 @@
-import { X } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import React from 'react'
 
-export default function Modal({ isOpen, onClose, title, children, size = 'md' }) {
-  const modalRef = useRef(null);
-  const firstFocusableRef = useRef(null);
-  const lastFocusableRef = useRef(null);
+export default function Modal({ isOpen, title, onClose, children, size = 'md' }) {
+  if (!isOpen) return null
 
-  // Size mapping
   const sizeClasses = {
     sm: 'max-w-sm',
     md: 'max-w-md',
-    lg: 'max-w-lg',
-    xl: 'max-w-xl'
-  };
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    // Focus trap: move focus to modal
-    if (firstFocusableRef.current) {
-      firstFocusableRef.current.focus();
-    }
-
-    // Handle Escape key
-    const handleEscape = (e) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleEscape);
-
-    // Prevent body scroll when modal is open
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen, onClose]);
-
-  // Handle backdrop click
-  const handleBackdropClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
-  if (!isOpen) return null;
+    lg: 'max-w-2xl',
+    xl: 'max-w-4xl'
+  }
 
   return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm"
-      onClick={handleBackdropClick}
-      role="presentation"
-    >
-      <div
-        ref={modalRef}
-        className={`bg-clickhouse-surface-card border border-clickhouse-hairline rounded-lg shadow-lg max-h-[90vh] overflow-y-auto ${sizeClasses[size]}`}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-title"
-      >
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm animate-fade-in">
+      <div className={`
+        bg-card border border-dark rounded-xl shadow-dark-xl
+        p-6 ${sizeClasses[size]} w-full mx-4
+        animate-scale-in
+        max-h-[90vh] overflow-y-auto
+      `}>
         {/* Header */}
-        <div className="flex items-center justify-between p-lg border-b border-clickhouse-hairline">
-          <h2 id="modal-title" className="text-lg font-bold text-clickhouse-ink">
-            {title}
-          </h2>
+        <div className="flex items-center justify-between mb-6 border-b border-dark pb-4">
+          <h2 className="text-xl font-bold text-light" style={{color: 'var(--ch-yellow)'}}>{title}</h2>
           <button
-            ref={firstFocusableRef}
             onClick={onClose}
-            className="p-2 hover:bg-clickhouse-surface-elevated rounded-md transition-colors"
-            aria-label="Close modal"
+            className="
+              p-1.5 hover:bg-dark rounded-lg
+              text-text-secondary hover:text-accent-emerald
+              transition-colors
+            "
           >
-            <X size={20} className="text-clickhouse-muted" />
+            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
           </button>
         </div>
 
-        {/* Body */}
-        <div className="p-lg">
+        {/* Content */}
+        <div className="text-light">
           {children}
         </div>
-
-        {/* Last focusable element for focus trap */}
-        <div
-          ref={lastFocusableRef}
-          tabIndex={0}
-          className="invisible"
-        />
       </div>
     </div>
-  );
+  )
 }

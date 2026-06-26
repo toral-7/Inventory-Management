@@ -135,7 +135,7 @@ export default function Login() {
 
         {/* Footer */}
         <p className="text-center text-xs text-clickhouse-muted mt-lg">
-          © 2024 Inventory Management System. All rights reserved.
+          © Inventory Management System. All rights reserved.
         </p>
       </div>
     </div>

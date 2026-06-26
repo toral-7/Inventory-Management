@@ -24,8 +24,8 @@ export default function Navbar() {
               <span className="text-clickhouse-canvas font-bold">I</span>
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-clickhouse-ink">Inventory</h2>
-              <p className="text-xs text-clickhouse-muted">Management</p>
+              <h2 className="text-sm font-semibold text-clickhouse-ink">Inventory Management</h2>
+              <p className="text-xs text-clickhouse-muted">System</p>
             </div>
           </div>
 
