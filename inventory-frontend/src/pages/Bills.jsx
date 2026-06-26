@@ -100,27 +100,32 @@ export default function Bills() {
 
     if (validItems.length === 0) {
       alert('Bill must have at least one item with a product selected and quantity > 0')
+      setSubmitting(false)
       return
     }
 
-    setSubmitting(true)
-
     try {
+      const lineItems = validItems.map((item) => ({
+        product_id: item.product_id,
+        quantity: parseInt(item.quantity),
+        item_discount: parseFloat(item.item_discount)
+      }))
+
       const submitData = {
         bill_date: formData.bill_date,
-        bill_items: validItems.map((item) => ({
-          product_id: item.product_id,
-          quantity: parseInt(item.quantity),
-          item_discount: parseFloat(item.item_discount)
-        })),
+        bill_items: lineItems,
         bill_discount: parseFloat(formData.bill_discount),
         tax_rate: parseFloat(formData.tax_rate)
       }
 
-      console.log('Submitting bill:', submitData)
-
       if (editingBill) {
-        await client.put(`/bills/${editingBill.id}`, submitData)
+        // #region agent log
+        fetch('http://127.0.0.1:7656/ingest/c788b1bd-9ee3-405e-babc-431531f512b5',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1378b2'},body:JSON.stringify({sessionId:'1378b2',location:'Bills.jsx:handleSubmit',message:'Bill edit payload keys',data:{payloadKeys:['items','tax_rate'],itemsLen:lineItems.length,tax_rate:submitData.tax_rate},timestamp:Date.now(),hypothesisId:'C',runId:'post-fix'})}).catch(()=>{});
+        // #endregion
+        await client.put(`/bills/${editingBill.id}`, {
+          items: lineItems,
+          tax_rate: submitData.tax_rate
+        })
       } else {
         await client.post('/bills', submitData)
       }
@@ -218,7 +223,7 @@ export default function Bills() {
                   <h1 className="text-display-sm text-clickhouse-ink mb-md">Bills</h1>
                   <p className="text-body-md text-clickhouse-body">Create and manage bills</p>
                 </div>
-                {user?.role === 'admin' && (
+                {user?.role === 'admin' || user?.branch_id ? (
                   <StyledButton
                     variant="primary"
                     onClick={handleCreate}
@@ -226,7 +231,7 @@ export default function Bills() {
                   >
                     Create Bill
                   </StyledButton>
-                )}
+                ) : null}
               </div>
 
               {/* Search */}
@@ -265,7 +270,7 @@ export default function Bills() {
                         {filteredBills.map((bill) => (
                           <tr key={bill.id}>
                             <td className="font-medium text-clickhouse-ink">{bill.id}</td>
-                            <td>{new Date(bill.bill_date).toLocaleDateString()}</td>
+                            <td>{new Date(bill.created_at).toLocaleDateString()}</td>
                             <td className="text-clickhouse-yellow font-semibold">₹{bill.total_amount}</td>
                             <td>
                               <span
@@ -452,7 +457,7 @@ export default function Bills() {
               </div>
               <div>
                 <p className="text-xs text-clickhouse-muted mb-xs">Date</p>
-                <p className="text-clickhouse-ink">{new Date(viewingBill.bill_date).toLocaleDateString()}</p>
+                <p className="text-clickhouse-ink">{new Date(viewingBill.created_at).toLocaleDateString()}</p>
               </div>
             </div>
 
@@ -475,11 +480,11 @@ export default function Bills() {
               </div>
               <div className="flex justify-between text-clickhouse-body">
                 <span>Discount:</span>
-                <span className="text-clickhouse-yellow">₹{viewingBill.discount}</span>
+                <span className="text-clickhouse-yellow">₹{viewingBill.discount_amount ?? 0}</span>
               </div>
               <div className="flex justify-between text-clickhouse-body">
                 <span>Tax:</span>
-                <span className="text-clickhouse-yellow">₹{viewingBill.tax}</span>
+                <span className="text-clickhouse-yellow">₹{viewingBill.tax_amount ?? 0}</span>
               </div>
               <div className="flex justify-between text-clickhouse-yellow font-bold text-lg pt-2 border-t border-clickhouse-hairline">
                 <span>Total:</span>

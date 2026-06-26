@@ -10,6 +10,8 @@ const billRoutes = require('./routes/bills');
 const analyticsRoutes = require('./routes/analytics');
 const branchRoutes = require('./routes/branches');
 const supplierRoutes = require('./routes/suppliers');
+const staffRoutes = require('./routes/staff')
+const settingsRoutes = require('./routes/settings')
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -50,6 +52,8 @@ app.use('/bills', billRoutes);
 app.use('/analytics', analyticsRoutes);
 app.use('/branches', branchRoutes);
 app.use('/suppliers', supplierRoutes);
+app.use('/staff', staffRoutes);
+app.use('/settings', settingsRoutes);
 
 // 404 handler
 app.use((req, res) => {

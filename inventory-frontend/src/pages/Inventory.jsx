@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { Search, Plus, Edit2, Trash2, AlertTriangle } from 'lucide-react'
+import { Search, Plus, Edit2, AlertTriangle } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Sidebar from '../components/Sidebar'
 import StyledCard from '../components/styled/StyledCard'
@@ -22,7 +22,7 @@ export default function Inventory() {
   const [formData, setFormData] = useState({
     product_id: '',
     branch_id: '',
-    quantity: '',
+    quantity_in_stock: '',
     reorder_level: ''
   })
   const [products, setProducts] = useState([])
@@ -89,19 +89,21 @@ export default function Inventory() {
     setFormData({
       product_id: '',
       branch_id: user?.role === 'staff' ? (user?.branch_id || '') : '',
-      quantity: '',
+      quantity_in_stock: '',
       reorder_level: ''
     })
     setIsModalOpen(true)
   }
+
+  const getReorderLevel = (item) => item.product?.reorder_level ?? 0
 
   const handleEdit = (item) => {
     setEditingItem(item)
     setFormData({
       product_id: item.product_id,
       branch_id: item.branch_id,
-      quantity: item.quantity_in_stock,
-      reorder_level: item.reorder_level
+      quantity_in_stock: item.quantity_in_stock,
+      reorder_level: getReorderLevel(item)
     })
     setIsModalOpen(true)
   }
@@ -111,16 +113,16 @@ export default function Inventory() {
     setSubmitting(true)
 
     try {
-      const submitData = {
-        product_id: formData.product_id,
-        branch_id: formData.branch_id,
-        quantity: parseInt(formData.quantity_in_stock),
-        reorder_level: parseInt(formData.reorder_level)
-      }
-
       if (editingItem) {
+        const submitData = { quantity_in_stock: parseInt(formData.quantity_in_stock, 10) }
         await client.put(`/inventory/${editingItem.id}`, submitData)
       } else {
+        const submitData = {
+          product_id: formData.product_id,
+          branch_id: formData.branch_id,
+          quantity_in_stock: parseInt(formData.quantity_in_stock, 10),
+          reorder_level: parseInt(formData.reorder_level, 10)
+        }
         await client.post('/inventory', submitData)
       }
 
@@ -133,23 +135,12 @@ export default function Inventory() {
     }
   }
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure?')) return
-
-    try {
-      await client.delete(`/inventory/${id}`)
-      fetchInventory()
-    } catch (err) {
-      alert(err.response?.data?.error || 'Failed to delete inventory')
-    }
-  }
-
   const filteredInventory = (inventory || []).filter((inv) =>
     inv.product?.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   const lowStockCount = filteredInventory.filter(
-    (inv) => inv.quantity_in_stock < inv.reorder_level
+    (inv) => inv.quantity_in_stock < getReorderLevel(inv)
   ).length
 
   if (loading) {
@@ -255,13 +246,14 @@ export default function Inventory() {
                       </thead>
                       <tbody>
                         {filteredInventory.map((item) => {
-                          const isLowStock = item.quantity_in_stock < item.reorder_level
+                          const reorderLevel = getReorderLevel(item)
+                          const isLowStock = item.quantity_in_stock < reorderLevel
                           return (
                             <tr key={item.id}>
                               <td className="font-medium text-clickhouse-ink">{item.product?.name}</td>
                               <td>{item.branch?.name}</td>
                               <td className="text-clickhouse-yellow font-semibold">{item.quantity_in_stock}</td>
-                              <td>{item.reorder_level}</td>
+                              <td>{reorderLevel}</td>
                               <td>
                                 <span
                                   className={`px-2 py-1 rounded text-xs font-semibold ${
@@ -281,12 +273,6 @@ export default function Inventory() {
                                       className="p-2 hover:bg-clickhouse-surface-elevated rounded-md transition-colors"
                                     >
                                       <Edit2 size={16} className="text-clickhouse-yellow" />
-                                    </button>
-                                    <button
-                                      onClick={() => handleDelete(item.id)}
-                                      className="p-2 hover:bg-clickhouse-surface-elevated rounded-md transition-colors"
-                                    >
-                                      <Trash2 size={16} className="text-clickhouse-rose" />
                                     </button>
                                   </div>
                                 </td>

@@ -35,19 +35,23 @@ const generateBillNumber = async (branch_id) => {
   }
 };
 
-// Helper: Calculate bill totals
+// Helper: Calculate bill totals (uses per-line item_tax when present to avoid double taxation)
 const calculateTotals = (items, taxRate = 18) => {
   let subtotal = 0;
   let totalDiscount = 0;
+  let taxAmount = 0;
 
   items.forEach((item) => {
     const lineSubtotal = item.price_at_sale * item.quantity;
     const lineDiscount = (lineSubtotal * (item.item_discount || 0)) / 100;
-    subtotal += lineSubtotal - lineDiscount;
+    const lineAfterDiscount = lineSubtotal - lineDiscount;
+    subtotal += lineAfterDiscount;
     totalDiscount += lineDiscount;
+    taxAmount += item.item_tax != null
+      ? parseFloat(item.item_tax)
+      : (lineAfterDiscount * taxRate) / 100;
   });
 
-  const taxAmount = (subtotal * taxRate) / 100;
   const totalAmount = subtotal + taxAmount;
 
   return {
@@ -129,7 +133,7 @@ router.get('/', authMiddleware, async (req, res, next) => {
         created_at,
         finalized_at,
         branch:branches(id, name, location),
-        user:users(id, name, email)
+        user:users(id, name, email),
         bill_items(
           id,
           product_id,
@@ -147,6 +151,10 @@ router.get('/', authMiddleware, async (req, res, next) => {
     }
 
     const { data, error } = await query;
+
+    // #region agent log
+    fetch('http://127.0.0.1:7656/ingest/c788b1bd-9ee3-405e-babc-431531f512b5',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1378b2'},body:JSON.stringify({sessionId:'1378b2',location:'bills.js:GET/',message:'GET bills query result',data:{hasError:!!error,errorMsg:error?.message,billCount:data?.length},timestamp:Date.now(),hypothesisId:'A',runId:'post-fix'})}).catch(()=>{});
+    // #endregion
 
     if (error) throw error;
 
@@ -383,7 +391,19 @@ router.post('/', authMiddleware, async (req, res, next) => {
 router.put('/:id', authMiddleware, async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { items, tax_rate } = req.body;
+    const { items: bodyItems, bill_items, tax_rate = 18 } = req.body;
+    const items = bodyItems || bill_items;
+
+    // #region agent log
+    fetch('http://127.0.0.1:7656/ingest/c788b1bd-9ee3-405e-babc-431531f512b5',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1378b2'},body:JSON.stringify({sessionId:'1378b2',location:'bills.js:PUT/:id',message:'PUT bill body keys',data:{hasItems:!!items,itemsLen:items?.length,hasBillItems:!!bill_items,billItemsLen:bill_items?.length,tax_rate},timestamp:Date.now(),hypothesisId:'C',runId:'post-fix'})}).catch(()=>{});
+    // #endregion
+
+    if (!items || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Bill must have at least one item'
+      });
+    }
 
     // Fetch bill
     const { data: bill, error: fetchError } = await supabase

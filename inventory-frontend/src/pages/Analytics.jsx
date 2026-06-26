@@ -19,9 +19,23 @@ export default function Analytics() {
   const fetchAnalytics = async () => {
     try {
       setLoading(true)
-      const response = await client.get(`/analytics/dashboard`)
-      if (response.data.success) {
-        setAnalytics(response.data.dashboard)
+      const [dashboardRes, monthlyRes, forecastRes] = await Promise.all([
+        client.get(`/analytics/dashboard?period=${selectedPeriod}`),
+        client.get(`/analytics/monthly-report?period=${selectedPeriod}`),
+        client.get(`/analytics/forecast?period=${selectedPeriod}`)
+      ])
+
+      if (dashboardRes.data.success) {
+        const dash = {
+          ...dashboardRes.data.dashboard,
+          monthly_report: monthlyRes.data.success
+            ? monthlyRes.data.monthly_report.monthly_data
+            : [],
+          forecast: forecastRes.data.success
+            ? forecastRes.data.forecast.products
+            : []
+        }
+        setAnalytics(dash)
       }
     } catch (err) {
       setError(err.message)
@@ -92,9 +106,9 @@ export default function Analytics() {
                     onChange={(e) => setSelectedPeriod(e.target.value)}
                     className="bg-clickhouse-surface-card border border-clickhouse-hairline rounded-md px-3 py-2 text-clickhouse-ink focus:outline-none focus:border-clickhouse-yellow"
                   >
-                    <option value="daily">Daily</option>
-                    <option value="monthly">Monthly</option>
-                    <option value="yearly">Yearly</option>
+                    <option className="text-clickhouse-muted" value="daily">Daily</option>
+                    <option className="text-clickhouse-muted" value="monthly">Monthly</option>
+                    <option className="text-clickhouse-muted" value="yearly">Yearly</option>
                   </select>
                 </div>
               </StyledCard>
@@ -103,13 +117,13 @@ export default function Analytics() {
               <StyledCard className="mb-lg">
                 <h2 className="text-title-md text-clickhouse-ink mb-lg flex items-center gap-2">
                   <TrendingUp size={20} className="text-clickhouse-yellow" />
-                  Monthly Revenue
+                  {selectedPeriod.charAt(0).toUpperCase() + selectedPeriod.slice(1)} Revenue
                 </h2>
                 {analytics?.monthly_report && analytics.monthly_report.length > 0 ? (
                   <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={analytics.monthly_report}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
-                      <XAxis dataKey="month" stroke="#888888" />
+                      <XAxis dataKey="period" stroke="#888888" interval={2} angle={-45} textAnchor='end' height={80} style={{ fontSize: '12.5px'}} />
                       <YAxis stroke="#888888" />
                       <Tooltip
                         contentStyle={{
@@ -120,7 +134,9 @@ export default function Analytics() {
                         formatter={(value) => `₹${value.toFixed(2)}`}
                         labelStyle={{ color: '#ffffff' }}
                       />
-                      <Legend />
+                      <Legend 
+                        payload={[{ value: 'Revenue', type: 'line', color: '#faff69' }]}
+                      />
                       <Line
                         type="monotone"
                         dataKey="revenue"
@@ -141,12 +157,16 @@ export default function Analytics() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-lg mb-lg">
                 <StyledCard>
                   <h2 className="text-title-md text-clickhouse-ink mb-lg">Sales Forecast</h2>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-clickhouse font-semibold">Product Name</span>
+                    <span className="text-clickhouse-yellow font-semibold"> Avg Daily Sales</span>
+                  </div>
                   {analytics?.forecast && analytics.forecast.length > 0 ? (
                     <div className="space-y-2">
                       {analytics.forecast.slice(0, 5).map((item, idx) => (
                         <div key={idx} className="flex justify-between items-center pb-2 border-b border-clickhouse-hairline last:border-b-0">
                           <span className="text-clickhouse-body">{item.product_name}</span>
-                          <span className="text-clickhouse-yellow font-semibold">{item.forecasted_demand}</span>
+                          <span className="text-clickhouse-yellow font-semibold">{item.avg_daily_sales}</span>
                         </div>
                       ))}
                     </div>
@@ -216,7 +236,7 @@ export default function Analytics() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-lg">
                 <StyledCard>
                   <p className="text-sm text-clickhouse-body mb-2">Total Revenue</p>
-                  <p className="text-stat-display text-clickhouse-yellow">
+                  <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-clickhouse-yellow truncate">
                     ₹{analytics?.summary?.total_revenue || 0}
                   </p>
                 </StyledCard>

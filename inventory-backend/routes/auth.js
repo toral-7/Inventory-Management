@@ -177,4 +177,73 @@ router.post('/logout', authMiddleware, (req, res) => {
   });
 });
 
+// PUT /auth/password - Change user password
+router.put('/password', authMiddleware, async (req, res, next) => {
+  try {
+    const { current_password, new_password } = req.body;
+    const user_id = req.user.user_id;
+ 
+    // Validate input
+    if (!current_password || !new_password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Current password and new password are required'
+      });
+    }
+ 
+    if (new_password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password must be at least 6 characters'
+      });
+    }
+ 
+    // Get current user with password hash
+    const { data: user, error: fetchError } = await supabase
+      .from('users')
+      .select('password_hash')
+      .eq('id', user_id)
+      .single();
+ 
+    if (fetchError || !user) {
+      return res.status(401).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+ 
+    // Verify current password
+    const bcrypt = require('bcrypt');
+    const isPasswordValid = await bcrypt.compare(current_password, user.password_hash);
+ 
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        error: 'Current password is incorrect'
+      });
+    }
+ 
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(new_password, 10);
+ 
+    // Update password
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({
+        password_hash: hashedPassword,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', user_id);
+ 
+    if (updateError) throw updateError;
+ 
+    res.status(200).json({
+      success: true,
+      message: 'Password changed successfully'
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

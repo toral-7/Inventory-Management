@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { Menu, LogOut, Settings, User } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 export default function Navbar() {
   const { user, logout } = useAuth()
@@ -58,24 +59,13 @@ export default function Navbar() {
                     <p className="text-xs text-clickhouse-muted capitalize">{user?.role}</p>
                   </div>
 
-                  <button
-                    onClick={() => {
-                      setShowUserMenu(false)
-                      navigate('/profile')
-                    }}
-                    className="w-full text-left px-md py-2 text-sm text-clickhouse-body hover:bg-clickhouse-surface-elevated hover:text-clickhouse-yellow transition-colors duration-200 flex items-center gap-2"
-                  >
-                    <User size={16} /> Profile
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setShowUserMenu(false)
-                    }}
-                    className="w-full text-left px-md py-2 text-sm text-clickhouse-body hover:bg-clickhouse-surface-elevated hover:text-clickhouse-yellow transition-colors duration-200 flex items-center gap-2"
+                  <Link
+                    to="/settings"
+                    onClick={() => setShowUserMenu(false)}
+                    className="w-full text-left px-md py-2 text-sm text-clickhouse-body hover:bg-clickhouse-surface-elevated hover:text-clickhouse-yellow transition-colors duration-200 flex items-center gap-2 block"
                   >
                     <Settings size={16} /> Settings
-                  </button>
+                  </Link>
 
                   <div className="border-t border-clickhouse-hairline my-2"></div>
 

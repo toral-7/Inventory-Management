@@ -7,17 +7,53 @@ const router = express.Router();
 // Helper: Check if user is admin
 const isAdmin = (req) => req.user.role === 'admin';
 
+// Helper: Get date range based on period
+const getDateRange = (period = 'monthly') => {
+  const today = new Date();
+  let startDate, endDate, groupFormat;
+
+  switch (period) {
+    case 'daily':
+      startDate = new Date(today);
+      startDate.setDate(today.getDate() - 7); // Last 7 days
+      endDate = today;
+      groupFormat = 'date'; // YYYY-MM-DD
+      break;
+    case 'yearly':
+      startDate = new Date(today);
+      startDate.setFullYear(today.getFullYear() - 5); // Last 5 years
+      endDate = today;
+      groupFormat = 'year'; // YYYY
+      break;
+    case 'monthly':
+    default:
+      startDate = new Date(today.getFullYear(), 0, 1); // Jan 1 of current year
+      endDate = today;
+      groupFormat = 'month'; // MMM-YY
+      break;
+  }
+
+  return {
+    startDate: startDate.toISOString().split('T')[0],
+    endDate: endDate.toISOString().split('T')[0],
+    groupFormat
+  };
+};
+
 // GET /analytics/dashboard
 // Dashboard summary: revenue, top products, inventory health
 router.get('/dashboard', authMiddleware, async (req, res, next) => {
   try {
+    const { period = 'monthly' } = req.query;
+    const { startDate, endDate } = getDateRange(period);
     const branchFilter = isAdmin(req) ? null : req.user.branch_id;
 
-    // Get total revenue from sales_logs (last 30 days)
+    // Get total revenue from sales_logs
     let revenueQuery = supabase
       .from('sales_logs')
       .select('revenue')
-      .gte('date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+      .gte('date', startDate)
+      .lte('date', endDate);
 
     if (branchFilter) {
       revenueQuery = revenueQuery.eq('branch_id', branchFilter);
@@ -26,11 +62,12 @@ router.get('/dashboard', authMiddleware, async (req, res, next) => {
     const { data: salesData, error: salesError } = await revenueQuery;
     const totalRevenue = salesData?.reduce((sum, sale) => sum + parseFloat(sale.revenue || 0), 0) || 0;
 
-    // Get total bills (last 30 days)
+    // Get total bills
     let billsQuery = supabase
       .from('bills')
       .select('id')
-      .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+      .gte('created_at', startDate)
+      .lte('created_at', endDate)
       .eq('status', 'finalized');
 
     if (branchFilter) {
@@ -64,7 +101,7 @@ router.get('/dashboard', authMiddleware, async (req, res, next) => {
       .select('id');
     const totalProducts = productsData?.length || 0;
 
-    // Get top 5 products by revenue (last 30 days)
+    // Get top 5 products by revenue
     let topProductsQuery = supabase
       .from('sales_logs')
       .select(`
@@ -73,7 +110,8 @@ router.get('/dashboard', authMiddleware, async (req, res, next) => {
         revenue,
         quantity_sold
       `)
-      .gte('date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+      .gte('date', startDate)
+      .lte('date', endDate);
 
     if (branchFilter) {
       topProductsQuery = topProductsQuery.eq('branch_id', branchFilter);
@@ -124,14 +162,15 @@ router.get('/dashboard', authMiddleware, async (req, res, next) => {
     res.status(200).json({
       success: true,
       dashboard: {
+        period,
         revenue: {
           total: totalRevenue.toFixed(2),
-          period: '30 days',
+          period: period,
           currency: '₹'
         },
         bills: {
           total: totalBills,
-          period: '30 days'
+          period: period
         },
         inventory: {
           low_stock_count: totalLowStock,
@@ -158,9 +197,11 @@ router.get('/dashboard', authMiddleware, async (req, res, next) => {
 // 30-day stock forecast per product
 router.get('/forecast', authMiddleware, async (req, res, next) => {
   try {
+    const { period = 'monthly' } = req.query;
+    const { startDate, endDate } = getDateRange(period);
     const branchFilter = isAdmin(req) ? null : req.user.branch_id;
 
-    // Get average daily sales per product (last 30 days)
+    // Get average daily sales per product
     let salesQuery = supabase
       .from('sales_logs')
       .select(`
@@ -169,7 +210,8 @@ router.get('/forecast', authMiddleware, async (req, res, next) => {
         quantity_sold,
         date
       `)
-      .gte('date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+      .gte('date', startDate)
+      .lte('date', endDate);
 
     if (branchFilter) {
       salesQuery = salesQuery.eq('branch_id', branchFilter);
@@ -230,7 +272,7 @@ router.get('/forecast', authMiddleware, async (req, res, next) => {
     res.status(200).json({
       success: true,
       forecast: {
-        period: '30 days',
+        period: period,
         total_products: forecast.length,
         critical_products: forecast.filter((p) => p.status === 'critical').length,
         warning_products: forecast.filter((p) => p.status === 'warning').length,
@@ -243,15 +285,19 @@ router.get('/forecast', authMiddleware, async (req, res, next) => {
 });
 
 // GET /analytics/monthly-report
-// Monthly revenue report
+// Revenue report grouped by period (daily, monthly, yearly)
 router.get('/monthly-report', authMiddleware, async (req, res, next) => {
   try {
+    const { period = 'monthly' } = req.query;
+    const { startDate, endDate, groupFormat } = getDateRange(period);
     const branchFilter = isAdmin(req) ? null : req.user.branch_id;
 
-    // Get monthly revenue
+    // Get sales logs
     let revenueQuery = supabase
       .from('sales_logs')
-      .select('revenue, date');
+      .select('revenue, date')
+      .gte('date', startDate)
+      .lte('date', endDate);
 
     if (branchFilter) {
       revenueQuery = revenueQuery.eq('branch_id', branchFilter);
@@ -259,34 +305,74 @@ router.get('/monthly-report', authMiddleware, async (req, res, next) => {
 
     const { data: salesData } = await revenueQuery;
 
-    // Group by month
-    const monthlyRevenue = {};
-    const currentYear = new Date().getFullYear();
+    // Group by period format
+    const groupedData = {};
 
-    for (let i = 0; i < 12; i++) {
-      const date = new Date(currentYear, i, 1);
-      const monthKey = date.toLocaleString('default', { month: 'short', year: '2-digit' });
-      monthlyRevenue[monthKey] = {
-        month: monthKey,
-        revenue: 0,
-        bills: 0
-      };
+    if (groupFormat === 'date') {
+      // Daily: each date
+      for (let d = new Date(startDate); d <= new Date(endDate); d.setDate(d.getDate() + 1)) {
+        const dateKey = d.toISOString().split('T')[0];
+        groupedData[dateKey] = {
+          period: dateKey,
+          revenue: 0,
+          bills: 0
+        };
+      }
+    } else if (groupFormat === 'month') {
+      // Monthly: Jan-Dec
+      const startYear = new Date(startDate).getFullYear();
+      const endYear = new Date(endDate).getFullYear();
+      
+      for (let year = startYear; year <= endYear; year++) {
+        for (let month = 0; month < 12; month++) {
+          const date = new Date(year, month, 1);
+          const key = date.toLocaleString('default', { month: 'short', year: '2-digit' });
+          if (!(key in groupedData)) {
+            groupedData[key] = {
+              period: key,
+              revenue: 0,
+              bills: 0
+            };
+          }
+        }
+      }
+    } else if (groupFormat === 'year') {
+      // Yearly: last 5 years
+      const currentYear = new Date().getFullYear();
+      for (let i = 4; i >= 0; i--) {
+        const year = currentYear - i;
+        groupedData[year.toString()] = {
+          period: year.toString(),
+          revenue: 0,
+          bills: 0
+        };
+      }
     }
 
+    // Aggregate sales data
     salesData?.forEach((sale) => {
       const saleDate = new Date(sale.date);
-      if (saleDate.getFullYear() === currentYear) {
-        const monthKey = saleDate.toLocaleString('default', { month: 'short', year: '2-digit' });
-        if (monthlyRevenue[monthKey]) {
-          monthlyRevenue[monthKey].revenue += parseFloat(sale.revenue || 0);
-        }
+      let key;
+
+      if (groupFormat === 'date') {
+        key = sale.date;
+      } else if (groupFormat === 'month') {
+        key = saleDate.toLocaleString('default', { month: 'short', year: '2-digit' });
+      } else if (groupFormat === 'year') {
+        key = saleDate.getFullYear().toString();
+      }
+
+      if (groupedData[key]) {
+        groupedData[key].revenue += parseFloat(sale.revenue || 0);
       }
     });
 
-    // Get monthly bills
+    // Get bills data
     let billsQuery = supabase
       .from('bills')
       .select('created_at')
+      .gte('created_at', startDate)
+      .lte('created_at', endDate)
       .eq('status', 'finalized');
 
     if (branchFilter) {
@@ -297,25 +383,32 @@ router.get('/monthly-report', authMiddleware, async (req, res, next) => {
 
     billsData?.forEach((bill) => {
       const billDate = new Date(bill.created_at);
-      if (billDate.getFullYear() === currentYear) {
-        const monthKey = billDate.toLocaleString('default', { month: 'short', year: '2-digit' });
-        if (monthlyRevenue[monthKey]) {
-          monthlyRevenue[monthKey].bills += 1;
-        }
+      let key;
+
+      if (groupFormat === 'date') {
+        key = bill.created_at.split('T')[0];
+      } else if (groupFormat === 'month') {
+        key = billDate.toLocaleString('default', { month: 'short', year: '2-digit' });
+      } else if (groupFormat === 'year') {
+        key = billDate.getFullYear().toString();
+      }
+
+      if (groupedData[key]) {
+        groupedData[key].bills += 1;
       }
     });
 
-    const monthlyData = Object.values(monthlyRevenue);
-    const totalRevenue = monthlyData.reduce((sum, m) => sum + m.revenue, 0);
+    const reportData = Object.values(groupedData);
+    const totalRevenue = reportData.reduce((sum, item) => sum + item.revenue, 0);
 
     res.status(200).json({
       success: true,
       monthly_report: {
-        year: currentYear,
+        period: period,
         total_revenue: totalRevenue.toFixed(2),
         total_bills: billsData?.length || 0,
-        monthly_data: monthlyData,
-        average_monthly_revenue: (totalRevenue / 12).toFixed(2)
+        monthly_data: reportData,
+        average_revenue: (totalRevenue / reportData.length).toFixed(2)
       }
     });
   } catch (err) {

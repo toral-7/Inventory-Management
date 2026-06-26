@@ -4,12 +4,13 @@ import { AuthProvider } from './context/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
-import Profile from './pages/Profile'
+import Profile from './pages/Settings'
 import Analytics from './pages/Analytics'
 import Products from './pages/Products'
 import Inventory from './pages/Inventory'
 import Bills from './pages/Bills'
 import Suppliers from './pages/Suppliers'
+import Settings from './pages/Settings'
 
 export default function App() {
   return (
@@ -26,10 +27,10 @@ export default function App() {
             }
           />
           <Route
-            path="/profile"
+            path="/settings"
             element={
               <ProtectedRoute>
-                <Profile />
+                <Settings />
               </ProtectedRoute>
             }
           />

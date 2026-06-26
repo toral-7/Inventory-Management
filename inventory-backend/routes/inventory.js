@@ -117,6 +117,71 @@ router.get('/', authMiddleware, async (req, res, next) => {
   }
 });
 
+// GET /inventory/alerts/low-stock
+// Staff: own branch low stock, Admin: all branches
+router.get('/alerts/low-stock', authMiddleware, async (req, res, next) => {
+  try {
+    const branchFilter = getBranchFilter(req);
+
+    let query = supabase
+      .from('alerts')
+      .select(`
+        id,
+        product:products(id, name, base_price, category, reorder_level, supplier:suppliers(id, name, email, phone, lead_time_days)),
+        branch:branches(id, name, location),
+        alert_type,
+        status,
+        created_at
+      `)
+      .eq('alert_type', 'low_stock')
+      .eq('status', 'active');
+
+    if (branchFilter) {
+      query = query.eq('branch_id', branchFilter);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    const lowStockItems = data.map((alert) => ({
+      alert_id: alert.id,
+      product_name: alert.product.name,
+      product_id: alert.product.id,
+      reorder_level: alert.product.reorder_level,
+      branch: alert.branch.name,
+      branch_id: alert.branch.id,
+      supplier: alert.product.supplier,
+      alert_created_at: alert.created_at
+    }));
+
+    const enrichedItems = await Promise.all(
+      lowStockItems.map(async (item) => {
+        const { data: invData } = await supabase
+          .from('inventory')
+          .select('quantity_in_stock')
+          .eq('product_id', item.product_id)
+          .eq('branch_id', item.branch_id)
+          .single();
+
+        return {
+          ...item,
+          current_stock: invData?.quantity_in_stock || 0,
+          shortage: Math.max(0, item.reorder_level - (invData?.quantity_in_stock || 0))
+        };
+      })
+    );
+
+    res.status(200).json({
+      success: true,
+      count: enrichedItems.length,
+      low_stock_items: enrichedItems
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /inventory/:id
 // Get single inventory entry with branch restriction
 router.get('/:id', authMiddleware, async (req, res, next) => {
@@ -160,77 +225,6 @@ router.get('/:id', authMiddleware, async (req, res, next) => {
         ...data,
         status
       }
-    });
-  } catch (err) {
-    next(err);
-  }
-});
-
-// GET /inventory/low-stock
-// Staff: own branch low stock, Admin: all branches
-router.get('/alerts/low-stock', authMiddleware, async (req, res, next) => {
-  try {
-    const branchFilter = getBranchFilter(req);
-
-    let query = supabase
-      .from('alerts')
-      .select(`
-        id,
-        product:products(id, name, base_price, category, reorder_level, supplier:suppliers(id, name, email, phone, lead_time_days)),
-        branch:branches(id, name, location),
-        alert_type,
-        status,
-        created_at
-      `)
-      .eq('alert_type', 'low_stock')
-      .eq('status', 'active');
-
-    if (branchFilter) {
-      query = query.eq('branch_id', branchFilter);
-    }
-
-    const { data, error } = await query;
-
-    if (error) throw error;
-
-    // Format response with calculated shortage
-    const lowStockItems = data.map((alert) => {
-      const currentStock = alert.product_id ? 0 : 0; // We'll get this from inventory join
-
-      return {
-        alert_id: alert.id,
-        product_name: alert.product.name,
-        product_id: alert.product.id,
-        reorder_level: alert.product.reorder_level,
-        branch: alert.branch.name,
-        branch_id: alert.branch.id,
-        supplier: alert.product.supplier,
-        alert_created_at: alert.created_at
-      };
-    });
-
-    // Enhance with actual quantities from inventory
-    const enrichedItems = await Promise.all(
-      lowStockItems.map(async (item) => {
-        const { data: invData } = await supabase
-          .from('inventory')
-          .select('quantity_in_stock')
-          .eq('product_id', item.product_id)
-          .eq('branch_id', item.branch_id)
-          .single();
-
-        return {
-          ...item,
-          current_stock: invData?.quantity_in_stock || 0,
-          shortage: Math.max(0, item.reorder_level - (invData?.quantity_in_stock || 0))
-        };
-      })
-    );
-
-    res.status(200).json({
-      success: true,
-      count: enrichedItems.length,
-      low_stock_items: enrichedItems
     });
   } catch (err) {
     next(err);
@@ -324,7 +318,6 @@ router.post('/', authMiddleware, async (req, res, next) => {
           product_id,
           branch_id,
           quantity_in_stock: quantity,
-          reorder_level,
           last_restocked_at: new Date().toISOString()
         }
       ])
@@ -333,11 +326,14 @@ router.post('/', authMiddleware, async (req, res, next) => {
         product:products(id, name, base_price, category, reorder_level),
         branch:branches(id, name, location),
         quantity_in_stock,
-        reorder_level,
         last_restocked_at
       `);
 
     if (error) throw error;
+
+    if (reorder_level !== product.reorder_level) {
+      await supabase.from('products').update({ reorder_level }).eq('id', product_id);
+    }
 
     // Auto-manage alerts
     await manageAlerts(product_id, branch_id, quantity, reorder_level);

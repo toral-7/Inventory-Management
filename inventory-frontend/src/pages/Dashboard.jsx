@@ -126,11 +126,11 @@ export default function Dashboard() {
                     >
                       <div className="flex items-start justify-between mb-lg">
                         <Icon size={24} className="text-clickhouse-body" />
-                        <span className="text-xs text-clickhouse-muted">{card.subtext}</span>
+                        <span className="text-sm text-clickhouse-muted mb-xs">{card.subtext}</span>
                       </div>
-                      <p className="text-sm text-clickhouse-body mb-xs">{card.title}</p>
-                      <p className="text-stat-display text-clickhouse-yellow">
-                        {typeof card.value === 'number' ? card.value : card.value.replace('₹', '')}
+                      <p className="text-sm text-clickhouse-body mb-2">{card.title}</p>
+                      <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-clickhouse-yellow truncate">
+                        {card.value}
                       </p>
                     </StyledCard>
                   )
@@ -185,7 +185,7 @@ export default function Dashboard() {
                       <PieChart>
                         <Pie
                           data={[
-                            { name: 'OK', value: dashboard.inventory.health.ok, fill: '#22c55e' },
+                            { name: 'OK', value: dashboard.inventory.health.ok, fill: '#4ee887' },
                             { name: 'Low Stock', value: dashboard.inventory.health.low_stock, fill: '#ef4444' }
                           ]}
                           cx="50%"
@@ -201,9 +201,12 @@ export default function Dashboard() {
                           contentStyle={{
                             backgroundColor: '#1a1a1a',
                             border: '1px solid #2a2a2a',
-                            borderRadius: '8px'
+                            borderRadius: '8px',
+                            color: '#ffffff'
                           }}
+                          formatter={(value) => `${value} items`}
                           labelStyle={{ color: '#ffffff' }}
+                          itemStyle={{ color: '#ffffff'}}
                         />
                         <Legend />
                       </PieChart>
