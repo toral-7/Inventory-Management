@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm install --legacy-peer-deps && cd inventory-frontend && npm run build",
+  "buildCommand": "npm install --legacy-peer-deps && cd inventory-frontend && npm install --legacy-peer-deps && npm run build",
   "outputDirectory": "inventory-frontend/dist",
   "env": {
     "VITE_API_URL": "https://inventory-management-teo6.onrender.com"
