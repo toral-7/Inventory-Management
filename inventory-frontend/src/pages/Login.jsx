@@ -19,15 +19,19 @@ export default function Login() {
     e.preventDefault()
     setError(null)
     setLoading(true)
-
+    
     try {
+      //alert("Toral");
       const response = await client.post('/auth/login', {
         email,
         password
       })
+      // alert("Hiiiii");
+      // alert (response.data.success);
 
       if (response.data.success) {
         login(response.data.user, response.data.token)
+        // alert("Hi");
         navigate('/dashboard')
       }
     } catch (err) {

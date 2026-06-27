@@ -90,14 +90,15 @@ router.post('/register', async (req, res, next) => {
 // POST /auth/login
 router.post('/login', async (req, res, next) => {
   try {
+    
     const { email, password } = req.body;
     
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        error: 'Email and password are required'
-      });
-    }
+    // if (!email || !password) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     error: 'Email and password are required'
+    //   });
+    // }
     
     // Find user by email
     const { data, error } = await supabase
@@ -109,7 +110,7 @@ router.post('/login', async (req, res, next) => {
     if (error || !data) {
       return res.status(401).json({
         success: false,
-        error: 'Invalid email or password'
+        error: 'Invalid email'
       });
     }
     
@@ -119,7 +120,7 @@ router.post('/login', async (req, res, next) => {
     if (!passwordMatch) {
       return res.status(401).json({
         success: false,
-        error: 'Invalid email or password'
+        error: 'Invalid password'
       });
     }
     
