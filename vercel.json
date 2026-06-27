@@ -1,0 +1,8 @@
+{
+  "buildCommand": "npm --prefix inventory-frontend run build",
+  "outputDirectory": "inventory-frontend/dist",
+  "devCommand": "npm --prefix inventory-frontend run dev",
+  "env": {
+    "VITE_API_URL": "https://inventory-management-teo6.onrender.com"
+  }
+}
