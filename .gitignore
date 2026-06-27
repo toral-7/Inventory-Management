@@ -1,5 +1,4 @@
-# In project root, create .gitignore
-cat > .gitignore << 'EOF'
+
 # Dependencies
 node_modules/
 .npm
