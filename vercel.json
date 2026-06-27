@@ -1,5 +1,0 @@
-{
-  "buildCommand": "cd inventory-frontend && npm run build",
-  "outputDirectory": "inventory-frontend/dist",
-  "devCommand": "cd inventory-frontend && npm run dev"
-}
