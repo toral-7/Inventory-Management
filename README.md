@@ -238,8 +238,8 @@ See **[API_DOCS.md](/API_DOCS.md)** for complete reference.
 
 ## Security Implementation
 
-✅ **Authentication** - JWT tokens with expiration
-✅ **CORS** - Restricted to production domains
+✅ **Authentication** - JWT tokens with expiration  
+✅ **CORS** - Restricted to production domains <br>
 ✅ **RLS Policies** - Row-level security in database
 ✅ **Input Validation** - Server-side validation
 ✅ **Password Hashing** - bcrypt encryption
