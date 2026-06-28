@@ -1,605 +1,361 @@
-# 🔧 Setup & Installation Guide
+# Setup Guide
 
-Complete step-by-step guide to set up the Inventory & Billing Management System locally.
+Complete instructions for installing and running the Inventory & Billing Management System locally.
 
 ---
 
-## 📋 Prerequisites
+## Prerequisites
 
 Before starting, ensure you have:
 
-- **Node.js** v16 or higher ([Download](https://nodejs.org))
-  ```bash
-  node --version  # Check version
-  ```
+- **Node.js** (v20+) - Download from https://nodejs.org
+- **npm** (v10+) - Comes with Node.js
+- **Git** - Download from https://git-scm.com
+- **Supabase Account** - https://supabase.com (for database)
 
-- **npm** or **yarn** (comes with Node.js)
-  ```bash
-  npm --version
-  ```
-
-- **Git** ([Download](https://git-scm.com))
-  ```bash
-  git --version
-  ```
-
-- **Code Editor** (VS Code recommended)
-
-- **Supabase Account** ([Sign up free](https://supabase.com))
-
-- **PostgreSQL Knowledge** (optional, basic queries)
-
----
-
-## 🚀 Installation Steps
-
-### **Step 1: Clone Repository**
-
+**Verify installation:**
 ```bash
-# Clone the project
-git clone <your-github-repo-url>
-
-# Navigate to project directory
-cd inventory-management-system
-
-# View structure
-ls -la
-# You should see: inventory-backend, inventory-frontend, README.md
+node --version    # Should be v20+
+npm --version     # Should be v10+
+git --version     # Should be latest
 ```
 
 ---
 
-### **Step 2: Supabase Setup**
+## Environment Setup
 
-#### **2.1 Create Supabase Project**
+### 1. Clone Repository
 
-1. Go to [supabase.com](https://supabase.com)
-2. Click "New project"
-3. Fill in:
-   - Project name: `inventory-system`
-   - Database password: (strong password, save it!)
-   - Region: Choose closest to you
-4. Click "Create new project"
-5. Wait 2-3 minutes for setup
+```bash
+git clone https://github.com/toral-7/Inventory-Management.git
+cd Inventory-Management
+```
 
-#### **2.2 Get Credentials**
+### 2. Get Supabase Credentials
 
-1. In Supabase dashboard, go to **Settings** → **API**
-2. Copy:
-   - **Project URL** (Project ID)
-   - **anon public key** (Anon Key)
-   - **JWT Secret** (in JWT section, or use default)
-3. Save these somewhere safe!
-
-#### **2.3 Initialize Database**
-
-1. Go to **SQL Editor** in Supabase
-2. Click **"New Query"**
-3. Copy entire content from `inventory-backend/migrations/init.sql`
-4. Paste into SQL Editor
-5. Click **"Run"** or Ctrl+Enter
-6. Wait for all tables to be created (green checkmark)
+1. Log in to **Supabase Dashboard**
+2. Navigate to **Settings** → **API**
+3. Copy these values:
+   - **Project URL** - You'll need this for `SUPABASE_URL`
+   - **anon public key** - You'll need this for `SUPABASE_KEY`
 
 ---
 
-### **Step 3: Backend Setup**
+## Backend Setup
 
-#### **3.1 Install Dependencies**
+### Step 1: Navigate to Backend
 
 ```bash
-# Navigate to backend folder
 cd inventory-backend
-
-# Install npm packages
-npm install
 ```
 
-Expected packages:
-- express
-- cors
-- dotenv
-- @supabase/supabase-js
-- jsonwebtoken
+### Step 2: Create `.env` File
 
-#### **3.2 Create Environment File**
+Create a new file named `.env` in the `inventory-backend` folder:
 
-Create file: `inventory-backend/.env`
+```bash
+# Windows (PowerShell)
+New-Item -Name ".env" -ItemType File
 
-```env
-# Server
+# macOS/Linux
+touch .env
+```
+
+### Step 3: Fill `.env` with Credentials
+
+Edit `.env` and add:
+
+```
+SUPABASE_URL=https://your-project-id.supabase.co
+SUPABASE_KEY=your-anon-public-key-here
 PORT=5000
 NODE_ENV=development
-
-# Supabase
-SUPABASE_URL=https://your-project-id.supabase.co
-SUPABASE_KEY=your-anon-public-key
-
-# JWT
-JWT_SECRET=your-jwt-secret-key-here
-
-# CORS
+JWT_SECRET=your-secret-jwt-key-here
 CORS_ORIGIN=http://localhost:5173
 ```
 
-**Replace with your actual values from Supabase!**
+**Where:**
+- `SUPABASE_URL` - From Supabase dashboard
+- `SUPABASE_KEY` - From Supabase dashboard (anon public key)
+- `JWT_SECRET` - Any random string (e.g., `my-super-secret-key-12345`)
+- `CORS_ORIGIN` - Frontend local URL (for development)
 
-#### **3.3 Verify Connection**
+### Step 4: Install Dependencies
 
 ```bash
-# Start backend
+npm install --legacy-peer-deps
+```
+
+This installs all required packages for the backend.
+
+### Step 5: Verify Database Connection
+
+```bash
 npm run dev
-
-# You should see:
-# 🚀 Server running on http://localhost:5000
-# 📝 API Documentation:
-#    - Health Check: GET http://localhost:5000/health
 ```
 
-#### **3.4 Test Backend**
-
-Open new terminal and test:
-
-```bash
-# Test health endpoint (no auth needed)
-curl http://localhost:5000/health
-
-# Should return:
-# {"success":true,"message":"Server is running","timestamp":"2024-06-23T..."}
+**Expected output:**
+```
+✓ Server running on port 5000
+✓ Connected to Supabase
 ```
 
-✅ Backend is running!
+If you see errors:
+- Check Supabase credentials in `.env`
+- Verify internet connection
+- Ensure Supabase project is active
+
+**Keep this terminal open!** The backend needs to run.
 
 ---
 
-### **Step 4: Frontend Setup**
+## Frontend Setup
 
-#### **4.1 Install Dependencies**
+### Step 1: Open New Terminal
 
-**Open NEW terminal** (keep backend running in first terminal)
+Open a **new terminal/PowerShell window** and navigate to:
 
 ```bash
-# Navigate to frontend folder (from project root)
-cd inventory-frontend
-
-# Install npm packages
-npm install
+cd Inventory-Management/inventory-frontend
 ```
 
-Expected packages:
-- react
-- react-dom
-- react-router-dom
-- axios
-- recharts
-- tailwindcss
+### Step 2: Create `.env` File
 
-#### **4.2 Create Environment File**
+```bash
+# Windows (PowerShell)
+New-Item -Name ".env" -ItemType File
 
-Create file: `inventory-frontend/.env`
+# macOS/Linux
+touch .env
+```
 
-```env
+### Step 3: Fill `.env`
+
+Edit `.env` and add:
+
+```
 VITE_API_URL=http://localhost:5000
 ```
 
-#### **4.3 Start Frontend**
+This points frontend to your local backend.
+
+### Step 4: Install Dependencies
+
+```bash
+npm install --legacy-peer-deps
+```
+
+### Step 5: Start Development Server
 
 ```bash
 npm run dev
-
-# You should see:
-# ➜  Local:   http://localhost:5173/
-# ➜  press h to show help
 ```
 
-#### **4.4 Open in Browser**
-
-Navigate to: **http://localhost:5173**
-
-You should see the login page! 🎉
-
----
-
-## 🧪 Test the Setup
-
-### **Test 1: Login**
-
+**Expected output:**
 ```
-Email: admin@inventory.com
-Password: password123
-```
+VITE v8.1.0  ready in 886 ms
 
-**What to expect:**
-- ✅ Login successful
-- ✅ Redirected to Dashboard
-- ✅ See 4 summary cards
-- ✅ See navigation sidebar
-
-### **Test 2: Create Product**
-
-1. Click **Products** in sidebar
-2. Click **+ Add Product**
-3. Fill in:
-   - Name: `Test Laptop`
-   - Price: `50000`
-   - Category: `Electronics`
-   - Reorder Level: `5`
-4. Click **Create**
-
-**What to expect:**
-- ✅ Product appears in table
-- ✅ No console errors
-
-### **Test 3: View Inventory**
-
-1. Click **Inventory** in sidebar
-2. Should see products with stock levels
-3. Click **Update** on any item
-4. Change quantity
-5. Click **Update**
-
-**What to expect:**
-- ✅ Stock updates in table
-- ✅ Status updates (OK/Low Stock)
-
-### **Test 4: Logout**
-
-1. Click user avatar in navbar
-2. Click **Logout**
-3. Try accessing `/inventory` URL manually
-
-**What to expect:**
-- ✅ Redirected to login
-- ✅ Cannot access protected pages without token
-
----
-
-## 🛠 Common Issues & Fixes
-
-### **Issue: "Cannot connect to Supabase"**
-
-**Error:** `Error: getaddrinfo ENOTFOUND supabase...`
-
-**Fixes:**
-1. Check `.env` file has correct `SUPABASE_URL` and `SUPABASE_KEY`
-2. Verify credentials from Supabase dashboard
-3. Check internet connection
-4. Restart backend: Ctrl+C, then `npm run dev`
-
----
-
-### **Issue: "Port 5000 already in use"**
-
-**Error:** `Error: listen EADDRINUSE :::5000`
-
-**Fixes:**
-```bash
-# Option 1: Kill process using port 5000
-# On Windows:
-netstat -ano | findstr :5000
-taskkill /PID <PID> /F
-
-# On Mac/Linux:
-lsof -i :5000
-kill -9 <PID>
-
-# Option 2: Change PORT in .env
-PORT=5001  # Change to different port
+➜  Local:   http://localhost:5173/
+➜  Network: use --host to expose
 ```
 
 ---
 
-### **Issue: "Cannot find module 'express'"**
+## Access the Application
 
-**Error:** `Error: Cannot find module 'express'`
+### In Your Browser
 
-**Fixes:**
-```bash
-# Delete node_modules and reinstall
-rm -rf node_modules package-lock.json
-npm install
-npm run dev
-```
+1. Open: **http://localhost:5173**
+2. Login with:
+   ```
+   Email: admin@inventory.com
+   Password: password123
+   ```
 
----
-
-### **Issue: "npm: command not found"**
-
-**Error:** `npm: command not found`
-
-**Fixes:**
-- Node.js not installed properly
-- Reinstall Node.js from [nodejs.org](https://nodejs.org)
-- Restart terminal after installation
+**If login fails:**
+- Check backend console for errors
+- Verify `.env` files are correct
+- Ensure both servers are running
 
 ---
 
-### **Issue: "VITE_API_URL is undefined" (Frontend)**
-
-**Error:** Frontend can't reach backend, blank page
-
-**Fixes:**
-1. Check `.env` file exists in `inventory-frontend/`
-2. Verify `VITE_API_URL=http://localhost:5000`
-3. Restart frontend: Ctrl+C, then `npm run dev`
-4. Clear browser cache: Ctrl+Shift+Delete
-5. Check backend is running on port 5000
-
----
-
-### **Issue: "Login fails, wrong credentials"**
-
-**Error:** `Invalid email or password`
-
-**Fixes:**
-1. Verify test account exists in Supabase
-2. Check email is exactly: `admin@inventory.com`
-3. Check password is exactly: `password123`
-4. Go to Supabase → Auth → Users, verify user exists
-5. If not, create manually via SQL:
-
-```sql
--- Add test user manually (if needed)
-INSERT INTO auth.users (email, encrypted_password, email_confirmed_at)
-VALUES (
-  'admin@inventory.com',
-  crypt('password123', gen_salt('bf')),
-  NOW()
-);
-```
-
----
-
-## 📁 Project Structure
+## Project Structure
 
 ```
-inventory-management-system/
+Inventory-Management/
 ├── inventory-backend/
+│   ├── routes/              # API endpoints
 │   ├── config/
-│   │   └── supabase.js
-│   ├── middleware/
-│   │   ├── auth.js
-│   │   └── errorHandler.js
-│   ├── routes/
-│   │   ├── auth.js
-│   │   ├── products.js
-│   │   ├── inventory.js
-│   │   ├── bills.js
-│   │   ├── analytics.js
-│   │   ├── branches.js
-│   │   └── suppliers.js
-│   ├── migrations/
-│   │   └── init.sql
-│   ├── .env                  # Create this
-│   ├── server.js
-│   └── package.json
+│   │   └── supabase.js      # Database config
+│   ├── server.js            # Express setup
+│   ├── package.json
+│   └── .env                 # Your credentials
 │
 ├── inventory-frontend/
 │   ├── src/
-│   │   ├── pages/
-│   │   │   ├── Login.jsx
-│   │   │   ├── Dashboard.jsx
-│   │   │   ├── Products.jsx
-│   │   │   ├── Inventory.jsx
-│   │   │   ├── Bills.jsx
-│   │   │   ├── Analytics.jsx
-│   │   │   └── Suppliers.jsx
-│   │   ├── components/
-│   │   │   ├── Navbar.jsx
-│   │   │   ├── Sidebar.jsx
-│   │   │   ├── Modal.jsx
-│   │   │   └── ProtectedRoute.jsx
-│   │   ├── context/
-│   │   │   └── AuthContext.jsx
-│   │   ├── api/
-│   │   │   └── client.js
+│   │   ├── components/      # UI components
+│   │   ├── pages/           # Page components
 │   │   ├── App.jsx
 │   │   └── main.jsx
-│   ├── .env                  # Create this
-│   ├── vite.config.js
-│   ├── tailwind.config.js
-│   └── package.json
+│   ├── package.json
+│   └── .env                 # API URL
 │
 ├── README.md
 ├── API_DOCS.md
-├── SETUP.md                  # This file
-└── .gitignore
+└── SETUP.md
 ```
 
 ---
 
-## 🔑 Environment Variables Checklist
+## Database Setup
 
-### **Backend `.env`**
-- [ ] `PORT=5000`
-- [ ] `NODE_ENV=development`
-- [ ] `SUPABASE_URL=https://xxxxx.supabase.co`
-- [ ] `SUPABASE_KEY=eyJhbGc...` (anon key)
-- [ ] `JWT_SECRET=your-secret-key`
-- [ ] `CORS_ORIGIN=http://localhost:5173`
+The database tables are **automatically created** when the backend connects to Supabase for the first time. 
 
-### **Frontend `.env`**
-- [ ] `VITE_API_URL=http://localhost:5000`
+**You don't need to run any SQL manually.**
 
+### Create Test User (Required)
+
+Run this ONE query in Supabase SQL Editor to create the login user:
+
+```sql
+INSERT INTO users (email, password_hash, name, role, status) 
+VALUES (
+  'admin@inventory.com',
+  '$2a$10$TW5QyAHhcocnYbhWRHomIeiFIVuYe5bK5yYpmu.YC0M46a0bOJhuK', 
+  'Admin User',
+  'admin',
+  'active'
+);
+```
+
+**Login credentials:**
+- Email: `admin@inventory.com`
+- Password: `password123`
+- If tables don't auto-create (rare), check that `SUPABASE_URL` and `SUPABASE_KEY` in `.env` are correct, then restart the backend.
 ---
 
-## 🎯 Running the Application
+## Running Both Servers
 
-### **Terminal 1: Backend**
+You need **two terminal windows/tabs:**
+
+**Terminal 1 (Backend):**
 ```bash
 cd inventory-backend
 npm run dev
-# Running on http://localhost:5000
+# Runs on http://localhost:5000
 ```
 
-### **Terminal 2: Frontend**
+**Terminal 2 (Frontend):**
 ```bash
 cd inventory-frontend
 npm run dev
-# Running on http://localhost:5173
+# Runs on http://localhost:5173
 ```
 
-### **Open in Browser**
+**Both must run simultaneously!**
+
+---
+
+## Troubleshooting
+
+### Backend Won't Start
+
+**Error:** `Missing Supabase credentials`
+- Solution: Check `.env` file in `inventory-backend/`
+- Verify `SUPABASE_URL` and `SUPABASE_KEY` are correct
+
+**Error:** `Cannot find module 'express'`
+- Solution: Run `npm install --legacy-peer-deps` in `inventory-backend/`
+
+### Frontend Won't Start
+
+**Error:** `Cannot find module 'react'`
+- Solution: Run `npm install --legacy-peer-deps` in `inventory-frontend/`
+
+**Error:** `Failed to fetch from localhost:5000`
+- Solution: Ensure backend is running
+- Check `VITE_API_URL` in frontend `.env`
+
+### Login Fails (401 Error)
+
+**Error:** "Invalid credentials"
+- Solution: Verify test user exists in database
+- Re-create user with SQL query above
+- Check password hash is correct
+
+### Database Connection Error
+
+**Error:** `Connection refused` or `Cannot reach Supabase`
+- Verify internet connection
+- Check Supabase project is active
+- Verify credentials are correct
+- Ensure RLS policies allow access (see [README.md](/README.md))
+
+---
+
+## Production Deployment
+
+### Frontend (Vercel)
+
+1. Push code to GitHub
+2. Go to **vercel.com**
+3. Import repository
+4. Set `VITE_API_URL` environment variable
+5. Deploy
+
+### Backend (Render)
+
+1. Go to **render.com**
+2. Create new Web Service
+3. Connect GitHub repo
+4. Set environment variables (SUPABASE_URL, SUPABASE_KEY, PORT=10000)
+5. Deploy
+
+See [README.md](/README.md) for live URLs.
+
+---
+
+## Development Commands
+
+**Frontend:**
+```bash
+npm run dev      # Start dev server
+npm run build    # Build for production
+npm run preview  # Preview production build
 ```
-http://localhost:5173
+
+**Backend:**
+```bash
+npm run dev      # Start with nodemon (auto-reload)
+npm start        # Start without nodemon
+npm run build    # Build if applicable
 ```
 
 ---
 
-## 🧑‍💼 Test Users
+## Next Steps
 
-### **Admin Account**
-```
-Email: admin@inventory.com
-Password: password123
-Access: Full system access
-```
-
-### **Staff Account** (if available)
-```
-Email: staff@inventory.com
-Password: password123
-Access: View-only, limited editing
-```
+1. ✅ Local setup complete
+2. 📖 Read API_DOCS.md for endpoint details
+3. 🎨 Explore the UI at http://localhost:5173
+4. 🔧 Modify and test features
+5. 🚀 Deploy when ready (see [README.md](/README.md))
 
 ---
 
-## 🚀 Database Management
+## Support
 
-### **View Database in Supabase**
-
-1. Go to Supabase dashboard
-2. Click **"Table Editor"** (left sidebar)
-3. Browse tables:
-   - `users` - User accounts
-   - `branches` - Store locations
-   - `products` - Product catalog
-   - `inventory` - Stock levels
-   - `bills` - Sales bills
-   - `suppliers` - Supplier info
-
-### **Run SQL Queries**
-
-1. Go to **SQL Editor**
-2. Click **"New Query"**
-3. Write query and click **"Run"**
-
-**Useful queries:**
-
-```sql
--- Check if tables exist
-SELECT table_name FROM information_schema.tables 
-WHERE table_schema='public';
-
--- Count products
-SELECT COUNT(*) FROM products;
-
--- View all users
-SELECT id, email, role FROM users;
-
--- Check inventory
-SELECT p.name, i.quantity_in_stock 
-FROM inventory i 
-JOIN products p ON i.product_id = p.id;
-```
+- **Frontend Issues:** Check browser console (F12)
+- **Backend Issues:** Check terminal output
+- **Database Issues:** Check Supabase dashboard
+- **Deployment Issues:** See [README.md](/README.md) Troubleshooting
 
 ---
 
-## 📊 Database Backup
+**Setup Complete!** 🎉
 
-### **Export Database**
-
-1. Go to Supabase dashboard
-2. Click **Settings** → **Database**
-3. Click **"Backups"**
-4. Download latest backup
-
-### **Import Data**
-
-```sql
--- Via SQL Editor, paste backup SQL and run
-```
+Your local development environment is ready. Start building!
 
 ---
 
-## 🔐 Security Notes
-
-⚠️ **Before Production:**
-
-1. **Change JWT_SECRET:**
-   ```bash
-   # Generate strong secret
-   openssl rand -base64 32
-   ```
-   Use this in `.env`
-
-2. **Set NODE_ENV=production**
-
-3. **Use HTTPS URLs** (not localhost)
-
-4. **Never commit `.env`** to Git
-   - Check `.gitignore` includes `.env`
-
-5. **Use strong passwords** for test accounts
-
-6. **Enable Row-Level Security (RLS)** in Supabase
-
----
-
-## 📞 Troubleshooting
-
-**Still having issues?**
-
-1. **Check console errors:**
-   - Backend: Look for red text in terminal
-   - Frontend: Open DevTools (F12) → Console tab
-
-2. **Verify all steps completed:**
-   - [ ] Supabase account created
-   - [ ] Database initialized with init.sql
-   - [ ] Backend `.env` created correctly
-   - [ ] Frontend `.env` created correctly
-   - [ ] `npm install` completed in both folders
-   - [ ] Both servers running (npm run dev)
-
-3. **Check network:**
-   - Backend running: `curl http://localhost:5000/health`
-   - Frontend: `http://localhost:5173` loads
-
-4. **View logs:**
-   - Backend: Terminal where `npm run dev` is running
-   - Frontend: DevTools Console (F12)
-   - Supabase: Dashboard → Logs
-
----
-
-## ✅ Verification Checklist
-
-- [ ] Node.js installed
-- [ ] Supabase account created
-- [ ] Database initialized
-- [ ] Backend `.env` created
-- [ ] Frontend `.env` created
-- [ ] Backend running on :5000
-- [ ] Frontend running on :5173
-- [ ] Can login with admin account
-- [ ] Can create product
-- [ ] Can update inventory
-- [ ] Dashboard loads without errors
-
----
-
-## 🎓 Next Steps
-
-Once setup is complete:
-
-1. **Read README.md** for feature overview
-2. **Check API_DOCS.md** for endpoint details
-3. **Start Day 13 testing** with test checklist
-4. **Deploy to Vercel** on Day 17
-
----
-
-**Last Updated:** Day 13
-**Questions?** Check README.md or API_DOCS.md
-
-Good luck! 🚀
+**Last Updated:** June 28, 2026

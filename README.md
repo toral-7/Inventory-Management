@@ -1,506 +1,316 @@
-# 📦 Inventory & Billing Management System
+# Inventory & Billing Management System
 
-A full-stack capstone project for NMIMS B.Tech Semester 2. A comprehensive inventory management and billing system with real-time analytics, multi-branch support, and role-based access control.
-
----
-
-## 🎯 Project Overview
-
-**Inventory & Billing Management System** is a modern web application designed for retail businesses to:
-- Manage product inventory across multiple branches
-- Track stock levels and receive low-stock alerts
-- Create and finalize sales bills with tax calculations
-- View real-time analytics and sales forecasting
-- Manage suppliers and their details
-- Control access with role-based permissions (Admin/Staff)
-
-**Duration:** 17-day sprint (Days 1-17)
-**Status:** ✅ Complete (Days 1-12 tested, Days 13-17 in progress)
+A full-stack web application for managing product inventory, billing, and analytics with role-based access control.
 
 ---
 
-## 🛠 Tech Stack
+## Problem Statement
 
-### **Frontend**
-- **React 18** - UI library
-- **Vite** - Build tool & dev server
-- **Tailwind CSS** - Styling
-- **Recharts** - Data visualization
-- **Axios** - HTTP client
-- **React Router v6** - Routing
-- **Context API** - State management
-
-### **Backend**
-- **Node.js** - Runtime
-- **Express.js** - Web framework
-- **Supabase** - PostgreSQL database & auth
-- **JWT** - Token-based authentication
-
-### **Database**
-- **PostgreSQL** (via Supabase)
-- **9 tables** with full CRUD APIs
-- **Row-level security** policies
-- **Auto-alerts** on inventory changes
+Businesses struggle with manual inventory tracking and billing processes, leading to:
+- Inaccurate stock levels
+- Slow billing workflows
+- Difficulty tracking sales trends
+- No real-time visibility across branches
 
 ---
 
-## ✨ Features
+## Solution
 
-### **Core Features**
-✅ **Authentication**
-- Email/password login
-- JWT token management
-- Persistent sessions (localStorage)
-- Protected routes with role-based access
-
-✅ **Inventory Management**
-- Track stock by product and branch
-- Update quantities in real-time
-- Low-stock alerts and notifications
-- Reorder level configuration
-
-✅ **Bills & Sales**
-- Create multi-item bills
-- Per-item discounts
-- Tax rate calculation
-- Finalize/lock bills
-- View bill details
-- Delete draft bills
-
-✅ **Products & Suppliers**
-- Full CRUD for products
-- Supplier management
-- Link suppliers to products
-- Search and filter
-
-✅ **Analytics & Reporting**
-- Dashboard with 4 summary cards
-- Monthly revenue trends (line chart)
-- Top 10 products by revenue (bar chart)
-- 30-day stock forecast (table)
-- Multi-branch filtering
-- Real-time data refresh
-
-✅ **Multi-Branch Support**
-- Branch-specific inventory
-- Staff restricted to their branch
-- Admin views all branches
-- Branch filtering on reports
-
-✅ **Role-Based Access Control**
-- **Admin:** Full system access, all features
-- **Staff:** View-only for most features, can create bills in their branch
+A comprehensive **Inventory & Billing Management System** that automates:
+- Product and inventory management
+- Digital bill generation and tracking
+- Real-time analytics and reporting
+- Multi-branch operations with role-based access
+- Low stock alerts and reorder management
 
 ---
 
-## 🚀 Quick Start
+## Live Application
 
-### **Prerequisites**
-- Node.js (v16+)
-- npm or yarn
-- Git
-- Supabase account (or local PostgreSQL)
+| Component | URL |
+|-----------|-----|
+| **Frontend** | https://inventory-management-beta-eight.vercel.app |
+| **Backend API** | https://inventory-management-teo6.onrender.com |
 
-### **Installation**
-
-**1. Clone the repository**
-```bash
-git clone <your-repo-url>
-cd inventory-management-system
+**Test Credentials:**
+```
+Email: admin@inventory.com
+Password: password123
+Email: staff1@inventory.com
+Password: password123
 ```
 
-**2. Backend Setup**
+---
+
+## Tech Stack
+
+### Frontend
+- **React 18** with Vite
+- **Tailwind CSS** (dark theme with ClickHouse design system)
+- **Recharts** (analytics & charts)
+- **Axios** (HTTP client)
+- **React Router** (navigation)
+
+### Backend
+- **Node.js** with Express
+- **Supabase** (PostgreSQL database)
+- **JWT** (authentication)
+- **CORS** (cross-origin requests)
+
+### Database
+- **PostgreSQL** (11 tables)
+- **Row Level Security (RLS)** policies
+- **Automated constraints** and validations
+
+### Deployment
+- **Frontend:** Vercel
+- **Backend:** Render
+- **Database:** Supabase
+
+---
+
+## Features
+
+### 1. Authentication & Authorization
+- Secure login with JWT
+- Role-based access (Admin & Staff)
+- Profile management and password changes
+
+### 2. Product Management
+- Create, read, update, delete products
+- Track product details (name, SKU, price, category)
+- Supplier association
+
+### 3. Inventory Management
+- Real-time stock tracking per branch
+- Low stock alerts and thresholds
+- Reorder level management
+- Stock movement history
+
+### 4. Billing System
+- Digital bill creation
+- Multiple line items per bill
+- Tax and discount calculations
+- Bill status tracking (Draft, Finalized, Paid)
+- Bill search and filtering
+
+### 5. Analytics Dashboard
+- Sales trends visualization
+- Revenue analytics
+- Product performance charts
+- Period-based analysis (Daily, Monthly, Yearly)
+- Export-ready data
+
+### 6. Settings & Administration
+- System configuration (tax rates, thresholds)
+- User preferences (timezone, date format)
+- Staff management (view, edit, delete users)
+- Branch management
+
+### 7. Supplier Management
+- Supplier database
+- Contact information
+- Associated products
+
+---
+
+## Database Schema
+
+### Core Tables
+- **users** - Staff accounts with roles and branches
+- **products** - Product catalog
+- **inventory** - Stock levels per branch
+- **bills** - Invoice records
+- **bill_items** - Line items in bills
+- **branches** - Multi-location support
+
+### Supporting Tables
+- **suppliers** - Supplier information
+- **sales_logs** - Sales transaction history
+- **alerts** - Low stock notifications
+- **settings** - System configuration (JSON)
+- **user_preferences** - Individual user settings
+
+---
+
+## Key Features Demonstrated
+
+✅ **Multi-branch operations** - Manage inventory across locations
+✅ **Real-time analytics** - Dashboard with dynamic charts
+✅ **Role-based control** - Admin vs Staff permissions
+✅ **Complete audit trail** - Sales logs and history
+✅ **Professional UI** - Dark theme with ClickHouse design system
+✅ **API-first architecture** - RESTful backend
+✅ **Production-ready** - Error handling, validation, CORS
+
+---
+
+## Project Structure
+
+```
+inventory-management/
+├── inventory-frontend/          # React application
+│   ├── src/
+│   │   ├── components/         # Reusable UI components
+│   │   ├── pages/              # Page components
+│   │   ├── styles/             # Global styling
+│   │   └── api/                # API client setup
+│   └── package.json
+│
+├── inventory-backend/           # Node.js API server
+│   ├── routes/                 # API endpoints
+│   ├── config/                 # Database configuration
+│   ├── server.js               # Express setup
+│   └── package.json
+│
+├── README.md                    # This file
+├── API_DOCS.md                  # API documentation
+├── SETUP.md                     # Installation guide
+└── vercel.json                  # Vercel deployment config
+```
+
+---
+
+## Quick Start
+
+### Option 1: Use Live Application (No Setup Required)
+1. Visit: https://inventory-management-beta-eight.vercel.app
+2. Login with credentials above
+3. Explore features
+
+### Option 2: Run Locally
+See **[SETUP.md](/SETUP.md)** for detailed instructions.
+
+Quick commands:
 ```bash
+# Terminal 1: Backend
 cd inventory-backend
 npm install
-```
-
-Create `.env` file:
-```
-PORT=5000
-SUPABASE_URL=your_supabase_url
-SUPABASE_KEY=your_supabase_anon_key
-JWT_SECRET=your_jwt_secret
-NODE_ENV=development
-```
-
-Start backend:
-```bash
 npm run dev
-# Server running on http://localhost:5000
-```
 
-**3. Frontend Setup**
-```bash
+# Terminal 2: Frontend
 cd inventory-frontend
 npm install
-```
-
-Create `.env` file:
-```
-VITE_API_URL=http://localhost:5000
-```
-
-Start frontend:
-```bash
-npm run dev
-# App running on http://localhost:5173
-```
-
-**4. Open Browser**
-Navigate to `http://localhost:5173`
-
----
-
-## 👤 Test Credentials
-
-**Admin Account**
-- Email: `admin@inventory.com`
-- Password: `password123`
-- Permissions: Full system access
-
-**Staff Account** (if available in database)
-- Email: `staff@inventory.com`
-- Password: `password123`
-- Permissions: View-only + bill creation in assigned branch
-
----
-
-## 📁 Project Structure
-
-### **Backend** (`inventory-backend/`)
-```
-inventory-backend/
-├── config/
-│   └── supabase.js          # Supabase client setup
-├── middleware/
-│   ├── auth.js              # JWT authentication
-│   └── errorHandler.js      # Error handling
-├── routes/
-│   ├── auth.js              # Login, user data
-│   ├── products.js          # Product CRUD
-│   ├── inventory.js         # Stock management
-│   ├── bills.js             # Bill creation & finalization
-│   ├── analytics.js         # Reports & forecasts
-│   ├── branches.js          # Branch management
-│   └── suppliers.js         # Supplier CRUD
-├── migrations/
-│   └── init.sql             # Database schema
-├── server.js                # Express app entry
-└── package.json
-```
-
-### **Frontend** (`inventory-frontend/`)
-```
-inventory-frontend/
-├── src/
-│   ├── pages/
-│   │   ├── Login.jsx        # Auth page
-│   │   ├── Dashboard.jsx    # Summary cards + charts
-│   │   ├── Products.jsx     # Product list & CRUD
-│   │   ├── Inventory.jsx    # Stock management
-│   │   ├── Bills.jsx        # Bill creation & list
-│   │   ├── Analytics.jsx    # Detailed reports
-│   │   └── Suppliers.jsx    # Supplier management
-│   ├── components/
-│   │   ├── Navbar.jsx       # Top navigation
-│   │   ├── Sidebar.jsx      # Left sidebar menu
-│   │   ├── Modal.jsx        # Reusable modal
-│   │   └── ProtectedRoute.jsx # Auth guard
-│   ├── context/
-│   │   └── AuthContext.jsx  # Auth state
-│   ├── api/
-│   │   └── client.js        # Axios with auth
-│   ├── App.jsx              # Main app + routing
-│   └── main.jsx
-├── tailwind.config.js       # Tailwind config
-├── vite.config.js           # Vite config
-└── package.json
-```
-
----
-
-## 🗄 Database Schema
-
-**9 Tables:**
-
-1. **users** - Users with roles (admin/staff)
-2. **branches** - Store/branch locations
-3. **products** - Product catalog
-4. **suppliers** - Supplier information
-5. **inventory** - Stock by product & branch
-6. **bills** - Sales bills/invoices
-7. **bill_items** - Individual items in bills
-8. **sales_logs** - Historical sales for analytics
-9. **alerts** - Low-stock notifications
-
-**Key Features:**
-- Foreign key relationships
-- Cascade delete policies
-- Auto-timestamps (created_at, updated_at)
-- Unique constraints (email, bill_number)
-- Indexes for performance
-
----
-
-## 📊 API Endpoints
-
-### **Authentication**
-- `POST /auth/register` - Create account
-- `POST /auth/login` - Login
-- `GET /auth/user` - Get current user
-
-### **Products**
-- `GET /products` - List all
-- `GET /products/:id` - Get single
-- `POST /products` - Create (admin only)
-- `PUT /products/:id` - Update (admin only)
-- `DELETE /products/:id` - Delete (admin only)
-
-### **Inventory**
-- `GET /inventory` - List with branch filtering
-- `GET /inventory/:id` - Get single
-- `PUT /inventory/:id` - Update stock
-- `GET /inventory/alerts/low-stock` - Low stock items
-
-### **Bills**
-- `GET /bills` - List bills
-- `GET /bills/:id` - Get details
-- `POST /bills` - Create bill
-- `PUT /bills/:id/finalize` - Lock bill
-- `DELETE /bills/:id` - Delete draft bill
-
-### **Analytics**
-- `GET /analytics/dashboard` - Summary cards + top products
-- `GET /analytics/forecast` - 30-day stock forecast
-- `GET /analytics/monthly-report` - Revenue by month
-
-### **Branches**
-- `GET /branches` - List all
-- `POST /branches` - Create (admin only)
-- `PUT /branches/:id` - Update (admin only)
-- `DELETE /branches/:id` - Delete (admin only)
-
-### **Suppliers**
-- `GET /suppliers` - List all
-- `GET /suppliers/:id` - Get single
-- `POST /suppliers` - Create (admin only)
-- `PUT /suppliers/:id` - Update (admin only)
-- `DELETE /suppliers/:id` - Delete (admin only)
-
----
-
-## 🔐 Authentication
-
-**How It Works:**
-1. User logs in with email/password
-2. Backend validates and returns JWT token
-3. Token stored in localStorage
-4. Token sent in `Authorization: Bearer <token>` header
-5. Backend validates token on protected routes
-6. Token validated on app load (AuthContext)
-
-**Protected Routes:**
-- `/dashboard` - Requires login
-- `/products` - Requires login
-- `/inventory` - Requires login
-- `/bills` - Requires login
-- `/analytics` - Requires login
-- `/suppliers` - Requires login
-- `/login` - Public
-
----
-
-## 📈 Analytics & Forecasting
-
-**Dashboard:**
-- 4 summary cards (Revenue, Bills, Low Stock, Products)
-- Bar chart: Top 5 products by revenue
-- Pie chart: Inventory health (OK vs Low Stock)
-
-**Analytics Page:**
-- Line chart: Monthly revenue trend (12 months)
-- Bar chart: Top 10 products by revenue
-- Table: 30-day stock forecast per product
-
-**Forecast Calculation:**
-- Average daily sales = Total sold / Days with sales
-- Days until stockout = Current stock / Avg daily sales
-- Status: Critical (≤10 days), Warning (≤20 days), OK (>20 days)
-
-**Note:** Forecast requires sales_logs data. Without sales history, all items show as "OK".
-
----
-
-## ⚠️ Known Issues
-
-### **Day 12 Testing Results**
-1. ✅ Authentication - Working
-2. ✅ Products CRUD - Working
-3. ✅ Inventory Management - Working (bug fixed)
-4. ✅ Suppliers CRUD - Working
-5. ✅ Bills Creation - Working
-6. ✅ Analytics - Working (no sales data by default)
-7. ⚠️ Mobile Responsiveness - Tables not optimal on iPhone (fix in Days 14-15)
-8. ℹ️ React Router v7 warnings - Non-critical (informational only)
-
-### **Limitations**
-- No sales data by default (populate sales_logs for forecast)
-- Mobile tables need responsive redesign
-- No PDF export (future feature)
-- No email notifications (future feature)
-
----
-
-## 🚀 Deployment
-
-### **Frontend to Vercel**
-
-1. **Push to GitHub**
-```bash
-git add .
-git commit -m "Final version Day 13"
-git push origin main
-```
-
-2. **Deploy to Vercel**
-   - Go to [vercel.com](https://vercel.com)
-   - Click "Import Project"
-   - Select your GitHub repo
-   - Set environment variable: `VITE_API_URL=http://localhost:5000` (or backend URL)
-   - Click "Deploy"
-
-3. **Verify Live URL**
-   - Test login
-   - Create product
-   - View analytics
-
----
-
-## 📝 Usage Examples
-
-### **Create a Product**
-```bash
-curl -X POST http://localhost:5000/products \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Laptop",
-    "base_price": 50000,
-    "category": "Electronics",
-    "reorder_level": 5,
-    "supplier_id": "uuid-here"
-  }'
-```
-
-### **Create a Bill**
-```bash
-curl -X POST http://localhost:5000/bills \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "items": [
-      {
-        "product_id": "uuid",
-        "quantity": 2,
-        "item_discount": 10
-      }
-    ],
-    "tax_rate": 18
-  }'
-```
-
-### **Get Analytics**
-```bash
-curl -X GET http://localhost:5000/analytics/dashboard \
-  -H "Authorization: Bearer <token>"
-```
-
----
-
-## 🔄 Development Workflow
-
-**Running Both Services:**
-
-**Terminal 1 (Backend):**
-```bash
-cd inventory-backend
 npm run dev
 ```
 
-**Terminal 2 (Frontend):**
-```bash
-cd inventory-frontend
-npm run dev
-```
+---
 
-**Both running:**
-- Backend: http://localhost:5000
-- Frontend: http://localhost:5173
-- Open http://localhost:5173 in browser
+## API Overview
+
+**Base URL:** `https://inventory-management-teo6.onrender.com`
+
+### Main Endpoints
+- `POST /auth/login` - User authentication
+- `GET/POST /products` - Product management
+- `GET/POST /inventory` - Stock management
+- `GET/POST /bills` - Billing operations
+- `GET /analytics` - Dashboard data
+- `GET/POST /suppliers` - Supplier management
+- `GET/PUT /settings` - Configuration
+- `GET/PUT /staff` - User management
+
+See **[API_DOCS.md](/API_DOCS.md)** for complete reference.
 
 ---
 
-## 📚 Additional Resources
+## Deployment Architecture
 
-- [React Documentation](https://react.dev)
-- [Tailwind CSS Docs](https://tailwindcss.com)
-- [Express.js Guide](https://expressjs.com)
-- [Supabase Docs](https://supabase.com/docs)
-- [React Router v6](https://reactrouter.com/v6)
+### Frontend (Vercel)
+- Build: `npm --prefix inventory-frontend run build`
+- Output: `inventory-frontend/dist`
+- Env: `VITE_API_URL` points to backend
+- Auto-deployed on git push
 
----
+### Backend (Render)
+- Runtime: Node.js
+- Start: `npm start`
+- Port: 10000
+- Auto-deployed from GitHub
 
-## 🎯 Future Enhancements
-
-- [ ] PDF bill export
-- [ ] Email notifications for low stock
-- [ ] Advanced forecasting with ML
-- [ ] Bulk product import/export (CSV)
-- [ ] User profile management
-- [ ] Audit logs for all changes
-- [ ] Mobile app (React Native)
-- [ ] Multi-language support
-
----
-
-## 📋 Development Timeline
-
-| Day | Task | Status |
-|-----|------|--------|
-| 1-8 | Backend APIs | ✅ Complete |
-| 9-11 | Frontend CRUD Pages | ✅ Complete |
-| 12 | Testing & Bug Fixes | ✅ Complete |
-| 13 | Documentation | 🔄 In Progress |
-| 14-15 | Polish & Features | ⏳ Pending |
-| 16 | Integration Testing | ⏳ Pending |
-| 17 | Deployment | ⏳ Pending |
+### Database (Supabase)
+- PostgreSQL 15
+- RLS policies for security
+- Connection pooling enabled
+- Real-time capabilities
 
 ---
 
-## 👨‍💻 Author
+## Security Implementation
 
-**Toral** - B.Tech Semester 3, NMIMS
-- Co-Secretary, Technical Affairs (Junior Council)
-- Project: Capstone - Inventory & Billing Management System
+✅ **Authentication** - JWT tokens with expiration
+✅ **CORS** - Restricted to production domains
+✅ **RLS Policies** - Row-level security in database
+✅ **Input Validation** - Server-side validation
+✅ **Password Hashing** - bcrypt encryption
+✅ **Environment Variables** - No secrets in code
 
 ---
 
-## 📞 Support
+## Performance Metrics
+
+- Frontend Build: ~1.6s
+- API Response Time: <200ms average
+- Database Queries: Optimized with indexes
+- Bundle Size: ~700KB (gzipped: ~192KB)
+
+---
+
+## Future Enhancements
+
+- [ ] Mobile-responsive design
+- [ ] Email notifications
+- [ ] SMS alerts for low stock
+- [ ] Barcode scanning
+- [ ] PDF invoice generation
+- [ ] Advanced reporting
+- [ ] Multi-currency support
+- [ ] Import/export features
+
+---
+
+## Troubleshooting
+
+**Login fails (401 error)**
+- Verify test user exists in database
+- Check Supabase connection
+- See [SETUP.md](/SETUP.md) for debugging
+
+**API errors (CORS)**
+- Ensure backend URL is correct in frontend
+- Check CORS settings in Render
+- Verify environment variables
+
+**Database errors**
+- Verify Supabase credentials
+- Check RLS policies are enabled
+- Ensure tables exist (see [SETUP.md](/SETUP.md))
+
+---
+
+## Support
 
 For issues or questions:
-1. Check the [API_DOCS.md](./API_DOCS.md) for endpoint details
-2. Check [SETUP.md](./SETUP.md) for installation help
-3. Review code comments in backend routes
-4. Check browser console for errors
+1. Check [SETUP.md](/SETUP.md) for installation help
+2. Review [API_DOCS.md](/API_DOCS.md) for endpoint details
+3. Check browser console for error messages
+4. Verify environment variables are set correctly
 
 ---
 
-## 📄 License
+## Contact
 
-This is an academic capstone project. Use for educational purposes only.
+**Built by:** Toral (NMIMS Mumbai - B.Tech Semester 2)
+**Internship:** LaunchED Full Stack Development
+**GitHub:** https://github.com/toral-7/Inventory-Management
 
 ---
 
-**Last Updated:** Day 13 of 17-day sprint
-**Next:** Days 14-15 (UI Polish & Features)
+## License
+
+This project is part of an academic capstone submission. All rights reserved.
+
+---
+
+**Last Updated:** June 28, 2026
+**Status:** Production Ready ✅

@@ -1,85 +1,21 @@
-# 📡 API Documentation
+# API Documentation
 
-Complete reference for all backend endpoints. All requests require `Authorization: Bearer <token>` header (except login).
+**Base URL:** `https://inventory-management-teo6.onrender.com`
 
----
-
-## **Base URL**
-```
-http://localhost:5000
-```
-
-## **Response Format**
-
-All responses are JSON:
-```json
-{
-  "success": true,
-  "message": "Operation successful",
-  "data": {}
-}
-```
-
-## **Error Format**
-```json
-{
-  "success": false,
-  "error": "Error description"
-}
-```
+All endpoints require authentication except `/auth/login`.
 
 ---
 
-# 🔐 Authentication Endpoints
+## Authentication
 
-## **POST /auth/register**
+### Login
 
-Register a new user account.
+**POST** `/auth/login`
+
+Create a JWT token for authentication.
 
 **Request:**
-```bash
-POST /auth/register
-Content-Type: application/json
-
-{
-  "email": "user@inventory.com",
-  "password": "securepassword123",
-  "name": "John Doe",
-  "role": "staff"  // "admin" or "staff"
-}
-```
-
-**Response (201):**
 ```json
-{
-  "success": true,
-  "message": "User registered successfully",
-  "user": {
-    "id": "uuid",
-    "email": "user@inventory.com",
-    "name": "John Doe",
-    "role": "staff"
-  }
-}
-```
-
-**Errors (400):**
-- Email already exists
-- Invalid email format
-- Weak password
-- Missing required fields
-
----
-
-## **POST /auth/login**
-
-Login and get JWT token.
-
-**Request:**
-```bash
-POST /auth/login
-Content-Type: application/json
-
 {
   "email": "admin@inventory.com",
   "password": "password123"
@@ -90,149 +26,70 @@ Content-Type: application/json
 ```json
 {
   "success": true,
-  "message": "Login successful",
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "user": {
-    "id": "uuid",
+    "id": "user-uuid",
     "email": "admin@inventory.com",
     "name": "Admin User",
-    "role": "admin",
-    "branch_id": "uuid"
+    "role": "admin"
   }
 }
 ```
 
-**Errors (401):**
-- Invalid email
-- Incorrect password
-- User not found
+**Response (401):**
+```json
+{
+  "success": false,
+  "error": "Invalid credentials"
+}
+```
+
+**Headers (all other requests):**
+```
+Authorization: Bearer {token}
+Content-Type: application/json
+```
 
 ---
 
-## **GET /auth/user**
+## Products
 
-Get current authenticated user's data.
+### Get All Products
 
-**Request:**
-```bash
-GET /auth/user
-Authorization: Bearer <token>
-```
+**GET** `/products`
+
+Retrieve all products.
 
 **Response (200):**
 ```json
 {
   "success": true,
-  "user": {
-    "id": "uuid",
-    "email": "admin@inventory.com",
-    "name": "Admin User",
-    "role": "admin",
-    "branch_id": "uuid"
-  }
-}
-```
-
-**Errors (401):**
-- No token provided
-- Invalid token
-- Token expired
-
----
-
-# 📦 Products Endpoints
-
-## **GET /products**
-
-Get all products (paginated, filterable).
-
-**Request:**
-```bash
-GET /products
-GET /products?supplier_id=uuid
-Authorization: Bearer <token>
-```
-
-**Query Parameters:**
-- `supplier_id` (optional) - Filter by supplier
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "count": 15,
-  "products": [
+  "data": [
     {
-      "id": "uuid",
+      "id": "prod-1",
       "name": "Laptop",
-      "base_price": "50000.00",
       "category": "Electronics",
-      "reorder_level": 5,
-      "created_at": "2024-06-01T10:00:00Z",
-      "supplier": {
-        "id": "uuid",
-        "name": "Tech Suppliers Inc",
-        "email": "contact@techsuppliers.com",
-        "phone": "9876543210",
-        "lead_time_days": 5
-      }
+      "unit_price": 999.99,
+      "supplier_id": "supp-1",
+      "created_at": "2024-01-15T10:30:00Z"
     }
   ]
 }
 ```
 
----
+### Create Product
 
-## **GET /products/:id**
+**POST** `/products`
 
-Get single product details.
+Add a new product. (Admin only)
 
 **Request:**
-```bash
-GET /products/uuid
-Authorization: Bearer <token>
-```
-
-**Response (200):**
 ```json
 {
-  "success": true,
-  "product": {
-    "id": "uuid",
-    "name": "Laptop",
-    "base_price": "50000.00",
-    "category": "Electronics",
-    "reorder_level": 5,
-    "created_at": "2024-06-01T10:00:00Z",
-    "supplier": {
-      "id": "uuid",
-      "name": "Tech Suppliers Inc"
-    }
-  }
-}
-```
-
-**Errors (404):**
-- Product not found
-
----
-
-## **POST /products**
-
-Create new product. **Admin only.**
-
-**Request:**
-```bash
-POST /products
-Content-Type: application/json
-Authorization: Bearer <token>
-
-{
   "name": "Laptop",
-  "base_price": 50000,
   "category": "Electronics",
-  "reorder_level": 5,
-  "supplier_id": "uuid"  // optional
+  "unit_price": 999.99,
+  "supplier_id": "supp-1"
 }
 ```
 
@@ -240,44 +97,28 @@ Authorization: Bearer <token>
 ```json
 {
   "success": true,
-  "message": "Product created successfully",
-  "product": {
-    "id": "new-uuid",
+  "data": {
+    "id": "prod-1",
     "name": "Laptop",
-    "base_price": "50000.00",
     "category": "Electronics",
-    "reorder_level": 5,
-    "supplier": null
+    "unit_price": 999.99,
+    "supplier_id": "supp-1",
+    "created_at": "2024-01-15T10:30:00Z"
   }
 }
 ```
 
-**Validation Errors (400):**
-- Missing name
-- base_price must be positive number
-- reorder_level must be non-negative integer
+### Update Product
 
-**Permission Errors (403):**
-- Only admins can create products
+**PUT** `/products/:id`
 
----
-
-## **PUT /products/:id**
-
-Update product. **Admin only.**
+Update product details. (Admin only)
 
 **Request:**
-```bash
-PUT /products/uuid
-Content-Type: application/json
-Authorization: Bearer <token>
-
+```json
 {
-  "name": "Gaming Laptop",
-  "base_price": 75000,
-  "category": "Gaming",
-  "reorder_level": 3,
-  "supplier_id": "uuid"
+  "name": "Laptop Pro",
+  "unit_price": 1299.99
 }
 ```
 
@@ -285,137 +126,67 @@ Authorization: Bearer <token>
 ```json
 {
   "success": true,
-  "message": "Product updated successfully",
-  "product": {
-    "id": "uuid",
-    "name": "Gaming Laptop",
-    "base_price": "75000.00",
-    "category": "Gaming",
-    "reorder_level": 3
+  "data": {
+    "id": "prod-1",
+    "name": "Laptop Pro",
+    "unit_price": 1299.99
   }
 }
 ```
 
-**Errors:**
-- 404: Product not found
-- 403: Only admins can update
-- 400: Invalid data
+### Delete Product
 
----
+**DELETE** `/products/:id`
 
-## **DELETE /products/:id**
-
-Delete product. **Admin only.**
-
-**Request:**
-```bash
-DELETE /products/uuid
-Authorization: Bearer <token>
-```
+Remove a product. (Admin only)
 
 **Response (200):**
 ```json
 {
   "success": true,
-  "message": "Product 'Laptop' deleted successfully"
+  "message": "Product deleted successfully"
 }
 ```
 
-**Errors:**
-- 404: Product not found
-- 403: Only admins can delete
-- 400: Cannot delete if has related inventory
-
 ---
 
-# 📋 Inventory Endpoints
+## Inventory
 
-## **GET /inventory**
+### Get Inventory
 
-Get inventory items with branch filtering.
+**GET** `/inventory`
 
-**Request:**
-```bash
-GET /inventory
-GET /inventory?branch_id=uuid
-Authorization: Bearer <token>
-```
+Get inventory levels for all branches.
 
 **Query Parameters:**
-- `branch_id` (optional) - Admin can filter by branch, staff sees only their branch
+- `branch_id` (optional) - Filter by branch
 
 **Response (200):**
 ```json
 {
   "success": true,
-  "count": 20,
-  "branch_filter": "uuid or all",
-  "inventory": [
+  "data": [
     {
-      "id": "uuid",
-      "product": {
-        "id": "uuid",
-        "name": "Laptop",
-        "reorder_level": 5,
-        "base_price": "50000.00"
-      },
-      "branch": {
-        "id": "uuid",
-        "name": "Main Store",
-        "location": "Mumbai"
-      },
-      "quantity_in_stock": 8,
-      "status": "ok",
-      "last_restocked_at": "2024-06-20T10:00:00Z"
+      "id": "inv-1",
+      "branch_id": "branch-1",
+      "product_id": "prod-1",
+      "quantity_in_stock": 50,
+      "last_restocked_at": "2024-01-20T08:00:00Z"
     }
   ]
 }
 ```
 
-**Status Values:**
-- `ok` - Quantity ≥ reorder_level
-- `low_stock` - Quantity < reorder_level
+### Update Inventory
 
----
-
-## **GET /inventory/:id**
-
-Get single inventory entry.
-
-**Request:**
-```bash
-GET /inventory/uuid
-Authorization: Bearer <token>
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "inventory": {
-    "id": "uuid",
-    "product": { ... },
-    "branch": { ... },
-    "quantity_in_stock": 8,
-    "status": "ok"
-  }
-}
-```
-
----
-
-## **PUT /inventory/:id**
+**PUT** `/inventory/:id`
 
 Update stock quantity.
 
 **Request:**
-```bash
-PUT /inventory/uuid
-Content-Type: application/json
-Authorization: Bearer <token>
-
+```json
 {
-  "quantity_in_stock": 15
+  "quantity_in_stock": 75
 }
 ```
 
@@ -423,294 +194,161 @@ Authorization: Bearer <token>
 ```json
 {
   "success": true,
-  "message": "Inventory updated successfully",
-  "inventory": {
-    "id": "uuid",
-    "quantity_in_stock": 15,
-    "status": "ok",
-    "last_restocked_at": "2024-06-23T10:00:00Z"
-  }
-}
-```
-
-**Validation Errors (400):**
-- quantity_in_stock must be non-negative integer
-- Exceeds maximum allowed (1,000,000)
-
-**Permission Errors (403):**
-- Staff can only update their branch inventory
-
----
-
-## **GET /inventory/alerts/low-stock**
-
-Get low-stock items and alerts.
-
-**Request:**
-```bash
-GET /inventory/alerts/low-stock
-Authorization: Bearer <token>
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "count": 3,
-  "low_stock_items": [
-    {
-      "alert_id": "uuid",
-      "product_name": "Laptop",
-      "product_id": "uuid",
-      "current_stock": 2,
-      "reorder_level": 5,
-      "shortage": 3,
-      "branch": "Main Store",
-      "supplier": {
-        "id": "uuid",
-        "name": "Tech Suppliers",
-        "email": "contact@techsuppliers.com",
-        "lead_time_days": 5
-      }
-    }
-  ]
-}
-```
-
----
-
-# 🧾 Bills Endpoints
-
-## **GET /bills**
-
-Get all bills.
-
-**Request:**
-```bash
-GET /bills
-Authorization: Bearer <token>
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "count": 10,
-  "bills": [
-    {
-      "id": "uuid",
-      "bill_number": "BILL-001",
-      "total_amount": "1180.00",
-      "status": "draft",
-      "created_at": "2024-06-23T10:00:00Z",
-      "created_by": "Admin User"
-    }
-  ]
-}
-```
-
-**Status Values:**
-- `draft` - Bill being created
-- `finalized` - Bill locked, cannot be modified
-
----
-
-## **GET /bills/:id**
-
-Get bill details with items.
-
-**Request:**
-```bash
-GET /bills/uuid
-Authorization: Bearer <token>
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "bill": {
-    "id": "uuid",
-    "bill_number": "BILL-001",
-    "branch_id": "uuid",
-    "user_id": "uuid",
-    "subtotal": "1000.00",
-    "tax_amount": "180.00",
-    "discount_amount": "0.00",
-    "total_amount": "1180.00",
-    "status": "draft",
-    "created_at": "2024-06-23T10:00:00Z",
-    "bill_items": [
-      {
-        "id": "uuid",
-        "product": {
-          "id": "uuid",
-          "name": "Laptop"
-        },
-        "quantity": 2,
-        "price_at_sale": "50000.00",
-        "item_discount": 0,
-        "item_tax": "180.00"
-      }
-    ]
+  "data": {
+    "id": "inv-1",
+    "quantity_in_stock": 75,
+    "last_restocked_at": "2024-01-21T10:00:00Z"
   }
 }
 ```
 
 ---
 
-## **POST /bills**
+## Bills
 
-Create new bill.
+### Get All Bills
+
+**GET** `/bills`
+
+Retrieve bills with optional filters.
+
+**Query Parameters:**
+- `status` (optional) - Filter by status (draft, finalized, paid)
+- `branch_id` (optional) - Filter by branch
+- `start_date` (optional) - Start date (ISO 8601)
+- `end_date` (optional) - End date (ISO 8601)
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "bill-1",
+      "bill_number": "BILL-2024-001",
+      "branch_id": "branch-1",
+      "user_id": "user-1",
+      "status": "finalized",
+      "subtotal": 1000.00,
+      "discount_amount": 50.00,
+      "tax_amount": 95.00,
+      "total_amount": 1045.00,
+      "created_at": "2024-01-15T10:30:00Z",
+      "finalized_at": "2024-01-15T10:35:00Z"
+    }
+  ]
+}
+```
+
+### Create Bill
+
+**POST** `/bills`
+
+Create a new bill draft.
 
 **Request:**
-```bash
-POST /bills
-Content-Type: application/json
-Authorization: Bearer <token>
-
+```json
 {
+  "branch_id": "branch-1",
   "items": [
     {
-      "product_id": "uuid",
+      "product_id": "prod-1",
       "quantity": 2,
-      "item_discount": 10
-    },
-    {
-      "product_id": "uuid2",
-      "quantity": 1,
-      "item_discount": 0
+      "price_at_sale": 999.99,
+      "item_discount": 50.00,
+      "item_tax": 159.90
     }
   ],
-  "tax_rate": 18
+  "discount_amount": 50.00,
+  "tax_amount": 159.90
 }
 ```
-
-**Item Fields:**
-- `product_id` (required) - Product UUID
-- `quantity` (required) - Positive integer
-- `item_discount` (optional) - Discount percentage (0-100)
 
 **Response (201):**
 ```json
 {
   "success": true,
-  "message": "Bill created successfully",
-  "bill": {
-    "id": "uuid",
-    "bill_number": "BILL-002",
-    "total_amount": "1180.00",
+  "data": {
+    "id": "bill-1",
+    "bill_number": "BILL-2024-001",
     "status": "draft",
-    "bill_items": [...]
+    "total_amount": 2109.79,
+    "created_at": "2024-01-15T10:30:00Z"
   }
 }
 ```
 
-**Validation Errors (400):**
-- At least one product required
-- Invalid product_id
-- Insufficient stock
-- Invalid tax_rate
+### Finalize Bill
 
----
+**PUT** `/bills/:id/finalize`
 
-## **PUT /bills/:id/finalize**
-
-Lock/finalize bill (cannot be edited after).
-
-**Request:**
-```bash
-PUT /bills/uuid/finalize
-Authorization: Bearer <token>
-```
+Mark bill as finalized (ready for payment).
 
 **Response (200):**
 ```json
 {
   "success": true,
-  "message": "Bill finalized successfully",
-  "bill": {
-    "id": "uuid",
-    "bill_number": "BILL-001",
+  "data": {
+    "id": "bill-1",
     "status": "finalized",
-    "finalized_at": "2024-06-23T10:30:00Z"
+    "finalized_at": "2024-01-15T10:35:00Z"
   }
 }
 ```
 
-**Errors (400):**
-- Bill already finalized
-- Bill not found
+### Delete Bill
 
----
+**DELETE** `/bills/:id`
 
-## **DELETE /bills/:id**
-
-Delete draft bill only.
-
-**Request:**
-```bash
-DELETE /bills/uuid
-Authorization: Bearer <token>
-```
+Remove a bill (draft only).
 
 **Response (200):**
 ```json
 {
   "success": true,
-  "message": "Bill 'BILL-001' deleted successfully"
+  "message": "Bill deleted successfully"
 }
 ```
 
-**Errors:**
-- 404: Bill not found
-- 400: Cannot delete finalized bill
-
 ---
 
-# 📊 Analytics Endpoints
+## Analytics
 
-## **GET /analytics/dashboard**
+### Get Analytics Data
 
-Get dashboard summary and top products.
+**GET** `/analytics`
 
-**Request:**
-```bash
-GET /analytics/dashboard
-Authorization: Bearer <token>
-```
+Retrieve dashboard analytics with period filtering.
+
+**Query Parameters:**
+- `period` (required) - daily, monthly, yearly
+- `start_date` (optional) - ISO 8601 format
+- `end_date` (optional) - ISO 8601 format
+- `branch_id` (optional) - Filter by branch
 
 **Response (200):**
 ```json
 {
   "success": true,
-  "dashboard": {
-    "revenue": {
-      "total": "150000.00",
-      "period": "30 days",
-      "currency": "₹"
-    },
-    "bills": {
-      "total": 45,
-      "period": "30 days"
-    },
-    "inventory": {
-      "low_stock_count": 3,
-      "health": {
-        "total_items": 50,
-        "ok": 47,
-        "low_stock": 3
+  "data": {
+    "total_revenue": 50000.00,
+    "total_bills": 150,
+    "total_items_sold": 500,
+    "average_bill_value": 333.33,
+    "period": "monthly",
+    "sales_by_date": [
+      {
+        "date": "2024-01-01",
+        "revenue": 1500.00,
+        "bills_count": 5
       }
-    },
-    "products": {
-      "total": 25
-    },
+    ],
     "top_products": [
       {
-        "product_id": "uuid",
+        "product_id": "prod-1",
         "product_name": "Laptop",
-        "total_revenue": "100000.00",
-        "total_quantity": 2
+        "quantity_sold": 25,
+        "revenue": 24999.75
       }
     ]
   }
@@ -719,130 +357,41 @@ Authorization: Bearer <token>
 
 ---
 
-## **GET /analytics/forecast**
+## Suppliers
 
-Get 30-day stock forecast.
+### Get All Suppliers
 
-**Request:**
-```bash
-GET /analytics/forecast
-Authorization: Bearer <token>
-```
+**GET** `/suppliers`
+
+List all suppliers.
 
 **Response (200):**
 ```json
 {
   "success": true,
-  "forecast": {
-    "period": "30 days",
-    "total_products": 50,
-    "critical_products": 2,
-    "warning_products": 5,
-    "products": [
-      {
-        "product_id": "uuid",
-        "product_name": "Laptop",
-        "current_stock": 2,
-        "reorder_level": 5,
-        "avg_daily_sales": "0.50",
-        "days_until_stockout": 4,
-        "will_stockout_30days": true,
-        "status": "critical"
-      }
-    ]
-  }
-}
-```
-
-**Status Values:**
-- `critical` - ≤ 10 days until stockout
-- `warning` - ≤ 20 days until stockout
-- `ok` - > 20 days until stockout
-
-**Note:** Requires sales_logs data. Without sales history, all show as "ok".
-
----
-
-## **GET /analytics/monthly-report**
-
-Get monthly revenue report.
-
-**Request:**
-```bash
-GET /analytics/monthly-report
-Authorization: Bearer <token>
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "monthly_report": {
-    "year": 2024,
-    "total_revenue": "1500000.00",
-    "total_bills": 120,
-    "average_monthly_revenue": "125000.00",
-    "monthly_data": [
-      {
-        "month": "Jan",
-        "revenue": "120000.00",
-        "bills": 15
-      },
-      {
-        "month": "Feb",
-        "revenue": "130000.00",
-        "bills": 18
-      }
-    ]
-  }
-}
-```
-
----
-
-# 🏢 Branches Endpoints
-
-## **GET /branches**
-
-Get all branches.
-
-**Request:**
-```bash
-GET /branches
-Authorization: Bearer <token>
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "count": 3,
-  "branches": [
+  "data": [
     {
-      "id": "uuid",
-      "name": "Main Store",
-      "location": "Mumbai",
-      "created_at": "2024-06-01T10:00:00Z"
+      "id": "supp-1",
+      "name": "Tech Supplies Inc",
+      "email": "contact@techsupplies.com",
+      "phone": "+1-800-TECH"
     }
   ]
 }
 ```
 
----
+### Create Supplier
 
-## **POST /branches**
+**POST** `/suppliers`
 
-Create branch. **Admin only.**
+Add a new supplier. (Admin only)
 
 **Request:**
-```bash
-POST /branches
-Content-Type: application/json
-Authorization: Bearer <token>
-
+```json
 {
-  "name": "South Branch",
-  "location": "Bangalore"
+  "name": "Tech Supplies Inc",
+  "email": "contact@techsupplies.com",
+  "phone": "+1-800-TECH"
 }
 ```
 
@@ -850,134 +399,244 @@ Authorization: Bearer <token>
 ```json
 {
   "success": true,
-  "message": "Branch created successfully",
-  "branch": {
-    "id": "uuid",
-    "name": "South Branch",
-    "location": "Bangalore"
+  "data": {
+    "id": "supp-1",
+    "name": "Tech Supplies Inc"
   }
 }
 ```
 
 ---
 
-## **PUT /branches/:id**
+## Settings
 
-Update branch. **Admin only.**
+### Get System Settings
 
----
+**GET** `/settings`
 
-## **DELETE /branches/:id**
+Retrieve system configuration.
 
-Delete branch. **Admin only.**
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "default_tax_rate": 18,
+    "low_stock_threshold": 20,
+    "reorder_level_default": 50,
+    "currency": "Indian Rupee (₹)"
+  }
+}
+```
 
----
+### Update System Settings
 
-# 🚚 Suppliers Endpoints
+**PUT** `/settings`
 
-## **GET /suppliers**
-
-Get all suppliers.
+Update configuration. (Admin only)
 
 **Request:**
-```bash
-GET /suppliers
-Authorization: Bearer <token>
+```json
+{
+  "default_tax_rate": 10,
+  "low_stock_threshold": 25,
+  "currency": "Indian Rupee (₹)"
+}
 ```
 
 **Response (200):**
 ```json
 {
   "success": true,
-  "count": 5,
-  "suppliers": [
-    {
-      "id": "uuid",
-      "name": "Tech Suppliers Inc",
-      "contact_person": "Rajesh Kumar",
-      "email": "rajesh@techsuppliers.com",
-      "phone": "9876543210",
-      "lead_time_days": 5,
-      "created_at": "2024-06-01T10:00:00Z"
-    }
-  ]
+  "data": {
+    "default_tax_rate": 10,
+    "low_stock_threshold": 25
+  }
 }
 ```
 
----
+### Get User Preferences
 
-## **POST /suppliers**
+**GET** `/settings/preferences`
 
-Create supplier. **Admin only.**
+Get personal preferences for logged-in user.
 
-**Request:**
-```bash
-POST /suppliers
-Content-Type: application/json
-Authorization: Bearer <token>
-
-{
-  "name": "Tech Suppliers Inc",
-  "contact_person": "Rajesh Kumar",
-  "email": "rajesh@techsuppliers.com",
-  "phone": "9876543210",
-  "lead_time_days": 5
-}
-```
-
-**Response (201):**
+**Response (200):**
 ```json
 {
   "success": true,
-  "message": "Supplier created successfully",
-  "supplier": {
-    "id": "uuid",
-    "name": "Tech Suppliers Inc",
-    "contact_person": "Rajesh Kumar",
-    "email": "rajesh@techsuppliers.com",
-    "phone": "9876543210",
-    "lead_time_days": 5
+  "data": {
+    "timezone": "Asia/Kolkata",
+    "date_format": "DD-MM-YYYY",
+    "time_format": "24-hour"
+  }
+}
+```
+
+### Update User Preferences
+
+**PUT** `/settings/preferences`
+
+Update personal settings.
+
+**Request:**
+```json
+{
+  "timezone": "America/New_York",
+  "date_format": "MM-DD-YYYY",
+  "time_format": "12-hour"
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "timezone": "America/New_York",
+    "date_format": "MM-DD-YYYY"
   }
 }
 ```
 
 ---
 
-## **PUT /suppliers/:id**
+## Staff Management
 
-Update supplier. **Admin only.**
+### Get All Staff
 
----
+**GET** `/staff`
 
-## **DELETE /suppliers/:id**
+List all users. (Admin only)
 
-Delete supplier. **Admin only.**
-
-**Error (400):** Cannot delete if supplier has linked products.
-
----
-
-# ⚠️ Error Codes
-
-| Status | Error | Meaning |
-|--------|-------|---------|
-| 400 | Bad Request | Invalid input data |
-| 401 | Unauthorized | Missing/invalid token |
-| 403 | Forbidden | Insufficient permissions |
-| 404 | Not Found | Resource doesn't exist |
-| 500 | Server Error | Internal server error |
-
----
-
-# 🔑 Headers
-
-**Required for all endpoints (except /auth/login and /auth/register):**
-```
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-Content-Type: application/json
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "user-1",
+      "email": "staff@company.com",
+      "name": "John Staff",
+      "role": "staff",
+      "branch_id": "branch-1",
+      "status": "active"
+    }
+  ]
+}
 ```
 
+### Update Staff
+
+**PUT** `/staff/:id`
+
+Modify staff details. (Admin only)
+
+**Request:**
+```json
+{
+  "branch_id": "branch-2",
+  "status": "active"
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "user-1",
+    "branch_id": "branch-2",
+    "status": "active"
+  }
+}
+```
+
+### Delete Staff
+
+**DELETE** `/staff/:id`
+
+Remove staff member. (Admin only)
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Staff deleted successfully"
+}
+```
+
 ---
 
-**Last Updated:** Day 13
-**Version:** 1.0
+## Error Responses
+
+All errors follow this format:
+
+**400 - Bad Request:**
+```json
+{
+  "success": false,
+  "error": "Invalid input: Missing required field 'name'"
+}
+```
+
+**401 - Unauthorized:**
+```json
+{
+  "success": false,
+  "error": "Invalid or expired token"
+}
+```
+
+**403 - Forbidden:**
+```json
+{
+  "success": false,
+  "error": "Admin access required"
+}
+```
+
+**404 - Not Found:**
+```json
+{
+  "success": false,
+  "error": "Resource not found"
+}
+```
+
+**500 - Server Error:**
+```json
+{
+  "success": false,
+  "error": "Internal server error"
+}
+```
+
+---
+
+## Rate Limiting
+
+- API calls: Unlimited (no rate limiting implemented)
+- Database connections: 10 concurrent connections
+
+---
+
+## Testing with cURL
+
+**Login:**
+```bash
+curl -X POST https://inventory-management-teo6.onrender.com/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@inventory.com","password":"password123"}'
+```
+
+**Get Products:**
+```bash
+curl -X GET https://inventory-management-teo6.onrender.com/products \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+---
+
+**API Version:** 1.0
+**Last Updated:** June 28, 2026
