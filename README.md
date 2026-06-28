@@ -239,10 +239,10 @@ See **[API_DOCS.md](/API_DOCS.md)** for complete reference.
 ## Security Implementation
 
 ✅ **Authentication** - JWT tokens with expiration  
-✅ **CORS** - Restricted to production domains <br>
-✅ **RLS Policies** - Row-level security in database
-✅ **Input Validation** - Server-side validation
-✅ **Password Hashing** - bcrypt encryption
+✅ **CORS** - Restricted to production domains  
+✅ **RLS Policies** - Row-level security in database  
+✅ **Input Validation** - Server-side validation  
+✅ **Password Hashing** - bcrypt encryption  
 ✅ **Environment Variables** - No secrets in code
 
 ---
@@ -300,8 +300,8 @@ For issues or questions:
 
 ## Contact
 
-**Built by:** Toral (NMIMS Mumbai - B.Tech Semester 2)
-**Internship:** LaunchED Full Stack Development
+**Built by:** Toral (NMIMS Mumbai - B.Tech Semester 2)  
+**Internship:** LaunchED Full Stack Development  
 **GitHub:** https://github.com/toral-7/Inventory-Management
 
 ---
