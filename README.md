@@ -135,12 +135,12 @@ Password: password123
 
 ## Key Features Demonstrated
 
-✅ **Multi-branch operations** - Manage inventory across locations
-✅ **Real-time analytics** - Dashboard with dynamic charts
-✅ **Role-based control** - Admin vs Staff permissions
-✅ **Complete audit trail** - Sales logs and history
-✅ **Professional UI** - Dark theme with ClickHouse design system
-✅ **API-first architecture** - RESTful backend
+✅ **Multi-branch operations** - Manage inventory across locations  
+✅ **Real-time analytics** - Dashboard with dynamic charts  
+✅ **Role-based control** - Admin vs Staff permissions  
+✅ **Complete audit trail** - Sales logs and history  
+✅ **Professional UI** - Dark theme with ClickHouse design system  
+✅ **API-first architecture** - RESTful backend  
 ✅ **Production-ready** - Error handling, validation, CORS
 
 ---
