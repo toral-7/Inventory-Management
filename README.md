@@ -300,7 +300,7 @@ For issues or questions:
 
 ## Contact
 
-**Built by:** Toral (NMIMS Mumbai - B.Tech Semester 2)  
+**Built by:** Toral (NMIMS Mumbai - B.Tech Semester 3)  
 **Internship:** LaunchED Full Stack Development  
 **GitHub:** https://github.com/toral-7/Inventory-Management
 
